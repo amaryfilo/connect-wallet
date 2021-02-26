@@ -19,13 +19,9 @@ The Web3 library is used to work with the blockchain.
 
 1. Install package from npm `npm install @amfi/connect-wallet`
 2. Import ConnectWallet `import { ConnectWallet } from '@amfi/connect-wallet';`
-3. Initialize `const connectWallet = new ConnectWallet();` in your application.
-4. Provide provider by using `connect()` function:
-   Available Provider name: MetaMask, WalletConnect.
-   For example `connectWallet.connect('MetaMask').then((connected: boolean) => console.log(connected),(err) => console.log(err));`
-5. If connected established use `addContract()` function.
-   `connectWallet.addContract({'ContractName',address,abi[]});`
-6. Then you can get access to contract methods by using contract method.
-   `connectWallet.contract(ContractName);`.
+3. Initialize ConnectWallet `const connectWallet = new ConnectWallet();` in your application.
+4. Provide provider by using `connect()` function. Available Provider name: MetaMask, WalletConnect. For example `connectWallet.connect('MetaMask').then((connected: boolean) => console.log(connected),(err) => console.log(err));`.
+5. If connect established then use `addContract()` function to add contract to Web3 `connectWallet.addContract({'ContractName',address,abi[]});`.
+6. Then you can get access to contract methods by using contract method `connectWallet.contract(ContractName);`.
 7. To get account and provider info (address, chainID) use `connectWallet.getAccounts()` method.
 8. To check transaction use `connectWallet.checkTx(txHash)` function.
