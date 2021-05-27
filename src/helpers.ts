@@ -5,6 +5,8 @@ export const parameters = {
     4: '0x4',
     5: '0x5',
     42: '0x2a',
+    128: '0x80',
+    256: '0x100',
   },
   chainsMap: {
     '0x1': {
@@ -26,6 +28,14 @@ export const parameters = {
     '0x2a': {
       name: 'kovan',
       chainID: 42,
+    },
+    '0x80': {
+      name: 'heco',
+      chainID: 128,
+    },
+    '0x100': {
+      name: 'heco-testnet',
+      chainID: 256,
     },
   },
 };
