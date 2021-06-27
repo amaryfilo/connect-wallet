@@ -2,14 +2,20 @@ import { Contract } from 'web3-eth-contract';
 
 export interface IProvider {
   name: string;
-  bridge?: {
-    url: string;
-    infura?: string[];
-  };
+  useProvider?: string;
   provider?: {
+    bridge?: {
+      url: string;
+      infura?: string[];
+    };
     infuraID?: string;
+    rpc?: {
+      rpc: {
+        [index: number]: string;
+      };
+      chainId?: number;
+    };
   };
-  use?: string;
 }
 
 export type ContractWeb3 = Contract;

@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 import WalletConnectProvider from '@walletconnect/web3-provider';
 
-import { IConnectorMessage } from '../interface';
+import { IConnectorMessage, IProvider } from '../interface';
 import { parameters } from '../helpers';
 
 export class WalletsConnect {
@@ -19,39 +19,36 @@ export class WalletsConnect {
    * @returns return connect status and connect information with provider for Web3.
    * @example this.connect().then((connector: IConnectorMessage) => console.log(connector),(err: IConnectorMessage) => console.log(err));
    */
-  public async connect(provider: any): Promise<IConnectorMessage> {
+  public async connect(provider: IProvider): Promise<IConnectorMessage> {
     return new Promise<any>(async (resolve, reject) => {
-      if (provider.use === 'provider') {
-        this.connector = new WalletConnectProvider({
-          infuraId: provider.provider.infuraID,
+      this.connector = new WalletConnectProvider(
+        provider.provider[provider.useProvider]
+      );
+      await this.connector
+        .enable()
+        .then(() => {
+          resolve({
+            code: 1,
+            connected: true,
+            provider: this.connector,
+            message: {
+              title: 'Success',
+              subtitle: 'Wallet Connect',
+              text: `Wallet Connect connected.`,
+            },
+          } as IConnectorMessage);
+        })
+        .catch(() => {
+          reject({
+            code: 5,
+            connected: false,
+            message: {
+              title: 'Error',
+              subtitle: 'Error connect',
+              text: `User closed qr modal window.`,
+            },
+          } as IConnectorMessage);
         });
-
-        await this.connector
-          .enable()
-          .then(() => {
-            resolve({
-              code: 1,
-              connected: true,
-              provider: this.connector,
-              message: {
-                title: 'Success',
-                subtitle: 'Wallet Connect',
-                text: `Wallet Connect connected.`,
-              },
-            } as IConnectorMessage);
-          })
-          .catch(() => {
-            reject({
-              code: 5,
-              connected: false,
-              message: {
-                title: 'Error',
-                subtitle: 'Error connect',
-                text: `User closed qr modal window.`,
-              },
-            } as IConnectorMessage);
-          });
-      }
     });
   }
 
