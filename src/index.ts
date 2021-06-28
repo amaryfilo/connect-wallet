@@ -282,9 +282,9 @@ export class ConnectWallet {
    * Get access to use Web3. Return Web3 variable to use it methods and parameters.
    *
    * @returns return Web3
-   * @example connectWallet.Web3Provider();
+   * @example connectWallet.currentWeb3();
    */
-  public Web3Provider = () => this.Web3;
+  public currentWeb3 = () => this.Web3;
 
   /**
    * Get account balance from ethereum blockchain. Provide address in function arguments to recive address balance

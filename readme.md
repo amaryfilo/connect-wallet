@@ -7,7 +7,7 @@ This package provides the ability to connect Wallets to website or application v
 ## Features
 
 - Connect to any blockchains.
-- Add Contacts by providing contract address and abi code.
+- Add Contracts by providing Contract address and ABI code.
 - Work with Contracts methods.
 - Check transactions in blockchain.
 
@@ -28,14 +28,14 @@ const connectWallet = new ConnectWallet();
 
 Example configuration:
 
-> if you want use Ethereum mainnet set useProvider: `infuraID` and provide mainnet Infura and if you want you can delete rpc.
+> Want use Ethereum mainnet? Set useProvider: `infura` and provide mainnet Infura. Remove rpc if it needed.
 
 ```typescript
 {
 	wallets: ['MetaMask', 'WalletConnect'],
 	network: {
-		name: chain.name,
-		chainID: chain.id
+		name: 'Ropsten',
+		chainID: 3
 	},
 	provider: {
 		MetaMask: {
@@ -45,10 +45,12 @@ Example configuration:
 			name: 'WalletConnect',
 			useProvider: 'rpc',
 			provider: {
-				infuraID: 'YOUR_INFURA_ID',
+				infura: {
+					infuraID: 'PASS_HERE_INFURA_ID',
+				},
 				rpc: {
 					rpc: {
-						3: "https://ropsten.YOUR_BLOCKCHAIN_RPC.io"
+						3: "PASS_HERE_BLOCKCHAIN_RPC" // if use Ethereum rpc, pass full Infura URL with Infura Id
 					},
 					chainId: 3
 				},
@@ -60,6 +62,29 @@ Example configuration:
 	},
 }
 ```
+
+RPC configuration:
+
+```typescript
+rpc: {
+	rpc: {
+		// if use Ethereum rpc, pass full Infura URL with Infura Id
+		[BLOCKCHAIN_NUMBER]: "BLOCKCHAIN_RPC",
+		[BLOCKCHAIN_NUMBER]: "BLOCKCHAIN_RPC",
+		...
+		[BLOCKCHAIN_NUMBER]: "BLOCKCHAIN_RPC"
+	},
+	// What Blockchain need to use
+	chainId: BLOCKCHAIN_NUMBER
+},
+```
+
+Where:
+
+`BLOCKCHAIN_NUMBER` - blockchain/network/chain ID, for example ropsten = 3, rinkeby = 4, and etc. Used to identify what kind of blockhain need to use.
+`BLOCKCHAIN_RPC` - Blockhain URL.
+
+> `chainId` === `rpc.BLOCKCHAIN_NUMBER`
 
 #### 4. Pass configuration to ConnectWallet in method `connect()`.
 
@@ -82,7 +107,9 @@ Wallet Connect:
 	name: string;
 	useProvider?: string;
 	provider?: {
-		infuraID?: string;
+		infura?: {
+			infuraID?: string;
+		}
 		rpc?: {
 			rpc: {
 				[index: number]: string;
@@ -160,9 +187,9 @@ interface:
 Example:
 
 ```typescript
-	connectWallet.addContract({'Staking1', '0x0000000000000000', ABI[]});
-	connectWallet.addContract({'Staking2', '0x0000000000000000', ABI[]});
-	connectWallet.addContract({'Token', '0x0000000000000000', ABI[]});
+connectWallet.addContract({'Staking1', '0x0000000000000000', ABI[]});
+connectWallet.addContract({'Staking2', '0x0000000000000000', ABI[]});
+connectWallet.addContract({'Token', '0x0000000000000000', ABI[]});
 ```
 
 #### 6. Use Contracts methods via method `contract()`.
@@ -173,19 +200,19 @@ Example:
 
 ```typescript
 connectWallet
-  .addContract('Staking1')
+  .contract('Staking1')
   .stakeStart('123')
   .send({ from: '0x000000....' })
   .then((tx: any) => console.log(tx));
 
 connectWallet
-  .addContract('Staking2')
+  .contract('Staking2')
   .stakeStart('123')
   .send({ from: '0x000000....' })
   .then((tx: any) => console.log(tx));
 
 connectWallet
-  .addContract('Token')
+  .contract('Token')
   .methods.balanceOf('0x0000000,,,')
   .call()
   .then(
@@ -212,5 +239,18 @@ Provide transaction Hash to check if transaction are in blockchain or not.
 Example:
 
 ```typescript
-connectWallet.txCheck('TX_HASH').then((info: any) => console.log('info: ', info). (err: any) => console.log('info tx error:', err));
+connectWallet.txCheck('TX_HASH').then(
+  (info: any) => console.log('info: ', info),
+  (err: any) => console.log('info tx error:', err)
+);
+```
+
+#### 9. To get current Web3 via`currentWeb3()` method.
+
+Get current Web3 and access to all Web3 functions.
+
+Example:
+
+```typescript
+const currentWeb3 = connectWallet.currentWeb3();
 ```

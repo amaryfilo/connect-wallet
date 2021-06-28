@@ -1,4 +1,5 @@
 import { Contract } from 'web3-eth-contract';
+import { AbiCoder } from 'web3-eth-abi';
 
 export interface IProvider {
   name: string;
@@ -8,7 +9,9 @@ export interface IProvider {
       url: string;
       infura?: string[];
     };
-    infuraID?: string;
+    infura?: {
+      infuraID: string;
+    };
     rpc?: {
       rpc: {
         [index: number]: string;
@@ -76,5 +79,5 @@ export interface IContract {
 export interface IAddContract {
   name: string;
   address: string;
-  abi: Array<any>;
+  abi: Array<AbiCoder>;
 }
