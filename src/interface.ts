@@ -81,3 +81,9 @@ export interface IAddContract {
   address: string;
   abi: Array<AbiCoder>;
 }
+
+export interface IChain {
+  name: string;
+  chainID: number;
+  hex: string;
+}

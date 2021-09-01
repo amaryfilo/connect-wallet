@@ -10,6 +10,7 @@ This package provides the ability to connect Wallets to website or application v
 - Add Contracts by providing Contract address and ABI code.
 - Work with Contracts methods.
 - Check transactions in blockchain.
+- Add custom blockhain.
 
 ## Usage
 
@@ -25,7 +26,37 @@ import { ConnectWallet } from '@amfi/connect-wallet';
 const connectWallet = new ConnectWallet();
 ```
 
-#### 3. Create configuration for Connect Wallet that will be used in `connectWallet.connect(provider, network, settings)` method.
+#### 3. Add custom blockchain by using `addChains([chains])` method.
+
+If you need to add custom blockhain use `addChains(...chain)` method before you create connect.
+
+Usage example:
+
+```typescript
+const chains: IChain[] = [
+	...
+    {
+      name: 'binance',
+      chainID: 56,
+      hex: '0x38',
+    },
+    {
+      name: 'binance-test',
+      chainID: 97,
+      hex: '0x61',
+    },
+		...
+  ];
+	...
+const chainsInfo = this.connectWallet.addChains(this.chains); // will return chains that added into connectwallet, this method not async.
+```
+
+Where:
+`name` - blockchain name.
+`chainID` - blockchain id.
+`hex` - blockchain id in hex format.
+
+#### 4. Create configuration for Connect Wallet that will be used in `connectWallet.connect(provider, network, settings)` method.
 
 Example configuration:
 
@@ -87,7 +118,7 @@ Where:
 
 > `chainId` === `rpc.BLOCKCHAIN_NUMBER`
 
-#### 4. Pass configuration to ConnectWallet in method `connect()`.
+#### 5. Pass configuration to ConnectWallet in method `connect()`.
 
 You need to pass 3 configuration options: provider, network, settings.
 
@@ -158,7 +189,7 @@ connectWallet.connect(provider, network, settings).then(
 );
 ```
 
-#### 5. If connect established use `addContract()` method to add contract in Connect Wallet.
+#### 6. If connect established use `addContract()` method to add contract in Connect Wallet.
 
 You can pass 3 parameters in method `addContract`: ContractName, address, abi.
 
@@ -193,7 +224,7 @@ connectWallet.addContract({'Staking2', '0x0000000000000000', ABI[]});
 connectWallet.addContract({'Token', '0x0000000000000000', ABI[]});
 ```
 
-#### 6. Use Contracts methods via method `contract()`.
+#### 7. Use Contracts methods via method `contract()`.
 
 `ContractName` - pass your contact name that was added in step 5.
 
@@ -222,7 +253,7 @@ connectWallet
   );
 ```
 
-#### 7. Get account and provider info via `getAccounts()` method.
+#### 8. Get account and provider info via `getAccounts()` method.
 
 When connect are established via method `getAccounts()` can get user wallet account information. Also with user information can get what provider are used.
 
@@ -233,7 +264,7 @@ connectWallet.getAccounts().subscribe(
 );
 ```
 
-#### 8. Check transaction via `txCheck()` method.
+#### 9. Check transaction via `txCheck()` method.
 
 Provide transaction Hash to check if transaction are in blockchain or not.
 
@@ -246,7 +277,7 @@ connectWallet.txCheck('TX_HASH').then(
 );
 ```
 
-#### 9. To get current Web3 via`currentWeb3()` method.
+#### 10. To get current Web3 via`currentWeb3()` method.
 
 Get current Web3 and access to all Web3 functions.
 

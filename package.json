@@ -1,6 +1,6 @@
 {
   "name": "@amfi/connect-wallet",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Connect Crypto Wallet by using MetaMask browser extention or mobile application and WalletConnect service by scanning Wallet Qr-code.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

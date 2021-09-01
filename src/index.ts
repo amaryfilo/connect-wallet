@@ -15,8 +15,9 @@ import {
   IError,
   IConnectorMessage,
   ContractWeb3,
+  IChain,
 } from './interface';
-import { parameters } from './helpers';
+import { parameters, addChains } from './helpers';
 
 export class ConnectWallet {
   private connector: any;
@@ -35,6 +36,14 @@ export class ConnectWallet {
    * Supported MetaMask and WalletConnect providers.
    */
   constructor() {}
+
+  /**
+   * Add custom chains to Connect Wallet, provide an array of chains than return chain list parameters.
+   *
+   * @returns return chains list parameters
+   * @example this.addChains([chain,chain]).then((parameters: any) => console.log(parameters),(err) => console.log(err));
+   */
+  public addChains = (chains: IChain[]): any => addChains(chains);
 
   /**
    * Create new wallet provider with network and settings valuse by passing it in function arguments.
