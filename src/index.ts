@@ -136,6 +136,15 @@ export class ConnectWallet {
   }
 
   /**
+   * Geting current connectror
+   *
+   * @example connectWallet.getConnector();
+   */
+  public getConnector(): any {
+    return this.connector;
+  }
+
+  /**
    * Add settings parameters to connect wallet answers.
    *
    * @param {Array} data array which needs to apply a settings parameters
