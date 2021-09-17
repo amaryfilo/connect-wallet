@@ -3,15 +3,18 @@ import WalletConnectProvider from '@walletconnect/web3-provider';
 
 import { IConnectorMessage, IProvider } from '../interface';
 import { parameters } from '../helpers';
+import { AbstractConnector } from '../abstract-connector';
 
-export class WalletsConnect {
-  private connector: any;
+export class WalletsConnect extends AbstractConnector {
+  public connector: WalletConnectProvider;
 
   /**
    * Connect wallet to application using connect wallet via WalletConnect by scanning Qr Code
    * in your favourite cryptowallet.
    */
-  constructor() {}
+  constructor() {
+    super();
+  }
 
   /**
    * Connect WalletConnect to application. Create connection with connect wallet and return provider for Web3.
@@ -19,10 +22,13 @@ export class WalletsConnect {
    * @returns return connect status and connect information with provider for Web3.
    * @example this.connect().then((connector: IConnectorMessage) => console.log(connector),(err: IConnectorMessage) => console.log(err));
    */
-  public async connect(provider: IProvider): Promise<IConnectorMessage> {
+  public async connect(
+    provider: IProvider,
+    chainUsed,
+  ): Promise<IConnectorMessage> {
     return new Promise<any>(async (resolve, reject) => {
       this.connector = new WalletConnectProvider(
-        provider.provider[provider.useProvider]
+        provider.provider[provider.useProvider],
       );
       await this.connector
         .enable()

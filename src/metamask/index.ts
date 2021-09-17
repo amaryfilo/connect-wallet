@@ -2,22 +2,19 @@ import { Observable } from 'rxjs';
 
 import { IConnectorMessage } from '../interface';
 import { parameters } from '../helpers';
+import { AbstractConnector } from '../abstract-connector';
 
-declare global {
-  interface Window {
-    ethereum: any;
-  }
-}
-
-export class MetamaskConnect {
-  private connector: any;
+export class MetamaskConnect extends AbstractConnector {
+  public connector: any;
   private chainID: number;
 
   /**
    * Metamask class to connect browser metamask extention to your application
    * using connect wallet.
    */
-  constructor() {}
+  constructor() {
+    super();
+  }
 
   /**
    * Connect Metamask browser or mobile extention to application. Create connection with connect
@@ -54,6 +51,10 @@ export class MetamaskConnect {
     });
   }
 
+  private ethRequestAccounts(): Promise<any> {
+    return this.connector.request({ method: 'eth_requestAccounts' });
+  }
+
   /**
    * Get account address and chain information from metamask extention.
    *
@@ -72,9 +73,10 @@ export class MetamaskConnect {
 
     return new Observable((observer) => {
       if (this.connector && this.connector.isMetaMask) {
-        this.connector.on('chainChanged', (chainId: string) => {
+        this.connector.on('chainChanged', async (chainId: string) => {
+          const accounts = await this.ethRequestAccounts();
           onNext(observer, {
-            address: this.connector.selectedAddress,
+            address: accounts[0],
             network: parameters.chainsMap[chainId],
           });
         });
@@ -98,47 +100,49 @@ export class MetamaskConnect {
           }
         });
 
-        if (!this.connector.selectedAddress) {
-          this.connector.enable().catch(() => {
-            onError(observer, {
-              code: 3,
-              message: {
-                title: 'Error',
-                subtitle: 'Authorized error',
-                message: 'You are not authorized.',
-              },
-            });
-          });
-        } else {
-          if (this.connector.selectedAddress) {
-            this.connector
-              .request({
-                method: 'net_version',
-              })
-              .then((chainID: string) => {
-                this.chainID = +chainID;
-                onNext(observer, {
-                  address: this.connector.selectedAddress,
-                  network:
-                    parameters.chainsMap[parameters.chainIDMap[+chainID]],
-                });
+        this.ethRequestAccounts().then((accounts) => {
+          if (!accounts[0]) {
+            this.connector.enable().catch(() => {
+              onError(observer, {
+                code: 3,
+                message: {
+                  title: 'Error',
+                  subtitle: 'Authorized error',
+                  message: 'You are not authorized.',
+                },
               });
-          } else {
-            onError(observer, {
-              code: 3,
-              message: {
-                title: 'Error',
-                subtitle: 'Authorized error',
-                message: 'You are not authorized.',
-              },
             });
+          } else {
+            if (accounts[0]) {
+              this.connector
+                .request({
+                  method: 'net_version',
+                })
+                .then((chainID: string) => {
+                  this.chainID = +chainID;
+                  onNext(observer, {
+                    address: accounts[0],
+                    network:
+                      parameters.chainsMap[parameters.chainIDMap[+chainID]],
+                  });
+                });
+            } else {
+              onError(observer, {
+                code: 3,
+                message: {
+                  title: 'Error',
+                  subtitle: 'Authorized error',
+                  message: 'You are not authorized.',
+                },
+              });
+            }
           }
-        }
+        });
       }
 
-      return {
-        unsubscribe(): any {},
-      };
+      // return {
+      //   unsubscribe(): any {},
+      // };
     });
   }
 }
