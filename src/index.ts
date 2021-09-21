@@ -186,7 +186,27 @@ export class ConnectWallet {
     return new Observable((observer) => {
       this.connector.getAccounts().subscribe(
         (connectInfo: IConnect) => {
-          if (connectInfo.network.chainID !== this.network.chainID) {
+          try {
+            if (connectInfo.network.chainID !== this.network.chainID) {
+              const error: IError = {
+                code: 4,
+                message: {
+                  title: 'Error',
+                  subtitle: 'Chain error',
+                  text:
+                    'Please choose ' +
+                    parameters.chainsMap[
+                      parameters.chainIDMap[this.network.chainID]
+                    ].name +
+                    ' network in your provider.',
+                },
+              };
+
+              observer.error(this.applySettings(error));
+            } else {
+              observer.next(this.applySettings(connectInfo));
+            }
+          } catch (err) {
             const error: IError = {
               code: 4,
               message: {
@@ -202,8 +222,6 @@ export class ConnectWallet {
             };
 
             observer.error(this.applySettings(error));
-          } else {
-            observer.next(this.applySettings(connectInfo));
           }
         },
         (error: IError) => {
