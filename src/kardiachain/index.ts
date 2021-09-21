@@ -14,10 +14,21 @@ export class KardiaChainConnect extends AbstractConnector {
   public connector: any;
   private chainID: number;
 
+  /**
+   * KardiaChainConnect class to connect browser KardiaChain Wallet extention to your application
+   * using connect wallet.
+   */
   constructor() {
     super();
   }
 
+  /**
+   * Connect KardiaChain Wallet browser. Create connection with connect
+   * wallet and return provider for Web3.
+   *
+   * @returns return connect status and connect information with provider for Web3.
+   * @example this.connect().then((connector: IConnectorMessage) => console.log(connector),(err: IConnectorMessage) => console.log(err));
+   */
   public connect(): Promise<IConnectorMessage> {
     return new Promise<any>((resolve, reject) => {
       if (typeof window.kardiachain !== 'undefined') {
@@ -52,6 +63,13 @@ export class KardiaChainConnect extends AbstractConnector {
   private ethRequestAccounts(): Promise<any> {
     return this.connector.request({ method: 'eth_requestAccounts' });
   }
+
+  /**
+   * Get account address and chain information from KardiaChain Wallet extention.
+   *
+   * @returns return an Observable array with data error or connected information.
+   * @example this.getAccounts().subscribe((account: any)=> {console.log('account',account)});
+   */
 
   public getAccounts(): Observable<any> {
     const onError = (observer: any, errorParams: any) => {
@@ -130,10 +148,6 @@ export class KardiaChainConnect extends AbstractConnector {
           }
         });
       }
-
-      // return {
-      //   unsubscribe(): any {},
-      // };
     });
   }
 }
