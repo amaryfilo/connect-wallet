@@ -4,12 +4,18 @@ import { IConnectorMessage } from '../interface';
 import { parameters } from '../helpers';
 import { AbstractConnector } from '../abstract-connector';
 
-export class MetamaskConnect extends AbstractConnector {
+declare global {
+  interface Window {
+    kardiachain: any;
+  }
+}
+
+export class KardiaChainConnect extends AbstractConnector {
   public connector: any;
   private chainID: number;
 
   /**
-   * Metamask class to connect browser metamask extention to your application
+   * KardiaChainConnect class to connect browser KardiaChain Wallet extention to your application
    * using connect wallet.
    */
   constructor() {
@@ -17,7 +23,7 @@ export class MetamaskConnect extends AbstractConnector {
   }
 
   /**
-   * Connect Metamask browser or mobile extention to application. Create connection with connect
+   * Connect KardiaChain Wallet browser. Create connection with connect
    * wallet and return provider for Web3.
    *
    * @returns return connect status and connect information with provider for Web3.
@@ -25,18 +31,21 @@ export class MetamaskConnect extends AbstractConnector {
    */
   public connect(): Promise<IConnectorMessage> {
     return new Promise<any>((resolve, reject) => {
-      if (typeof window.ethereum !== 'undefined') {
-        this.connector = window.ethereum;
-        resolve({
-          code: 1,
-          connected: true,
-          provider: 'Web3',
-          message: {
-            title: 'Success',
-            subtitle: 'Connect success',
-            text: `Metamask found and connected.`,
-          },
-        } as IConnectorMessage);
+      if (typeof window.kardiachain !== 'undefined') {
+        this.connector = window.kardiachain;
+        if (window.kardiachain.isKaiWallet) {
+          this.connector.enable();
+          resolve({
+            code: 1,
+            connected: true,
+            provider: this.connector,
+            message: {
+              title: 'Success',
+              subtitle: 'Connect success',
+              text: `Kardiachain found and connected.`,
+            },
+          } as IConnectorMessage);
+        }
       }
 
       reject({
@@ -45,7 +54,7 @@ export class MetamaskConnect extends AbstractConnector {
         message: {
           title: 'Error',
           subtitle: 'Error connect',
-          text: `Metamask not found, please install it from <a href='https://metamask.io/' target="_blank">metamask.io</a>.`,
+          text: `Kardiachain not found, please install it from <a href='https://metamask.io/' target="_blank">metamask.io</a>.`,
         },
       } as IConnectorMessage);
     });
@@ -56,7 +65,7 @@ export class MetamaskConnect extends AbstractConnector {
   }
 
   /**
-   * Get account address and chain information from metamask extention.
+   * Get account address and chain information from KardiaChain Wallet extention.
    *
    * @returns return an Observable array with data error or connected information.
    * @example this.getAccounts().subscribe((account: any)=> {console.log('account',account)});
@@ -72,7 +81,7 @@ export class MetamaskConnect extends AbstractConnector {
     };
 
     return new Observable((observer) => {
-      if (this.connector && this.connector.isMetaMask) {
+      if (this.connector && this.connector.isKaiWallet) {
         this.connector.on('chainChanged', async (chainId: string) => {
           const accounts = await this.ethRequestAccounts();
           onNext(observer, {
@@ -139,10 +148,6 @@ export class MetamaskConnect extends AbstractConnector {
           }
         });
       }
-
-      // return {
-      //   unsubscribe(): any {},
-      // };
     });
   }
 }

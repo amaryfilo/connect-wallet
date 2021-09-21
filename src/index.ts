@@ -1,8 +1,11 @@
 import Web3 from 'web3';
 import { Observable } from 'rxjs';
+import { Contract } from 'web3-eth-contract';
 
 import { MetamaskConnect } from './metamask';
 import { WalletsConnect } from './wallet-connect';
+import { WalletLinkConnect } from './wallet-link';
+import { KardiaChainConnect } from './kardiachain';
 
 import {
   INetwork,
@@ -16,18 +19,24 @@ import {
   IConnectorMessage,
   ContractWeb3,
   IChain,
+  INoNameContract,
 } from './interface';
 import { parameters, addChains } from './helpers';
 
 export class ConnectWallet {
-  private connector: any;
+  private connector: MetamaskConnect | WalletsConnect;
   private providerName: string;
-  private availableProviders: string[] = ['MetaMask', 'WalletConnect'];
+  private availableProviders: string[] = [
+    'MetaMask',
+    'WalletConnect',
+    'WalletLink',
+    'KardiaChain',
+  ];
 
   private network: INetwork;
   private settings: ISettings;
 
-  private Web3: any;
+  private Web3: Web3;
   private contracts: IContract = {};
   private allTxSubscribers = [];
 
@@ -58,7 +67,7 @@ export class ConnectWallet {
   public async connect(
     provider: IProvider,
     network: INetwork,
-    settings?: ISettings
+    settings?: ISettings,
   ): Promise<{} | boolean> {
     if (!this.availableProviders.includes(provider.name)) {
       return {
@@ -74,21 +83,15 @@ export class ConnectWallet {
     this.network = network;
     this.settings = settings ? settings : { providerType: false };
 
+    this.connector = this.chooseProvider(provider.name);
     const connectPromises = [
-      this.chooseProvider(provider.name)
-        .then((connector: any) => {
-          this.connector = connector;
-          return this.connector
-            .connect(provider)
-            .then((connect: IConnectorMessage) => {
-              return this.applySettings(connect);
-            })
-            .catch((error: IConnectorMessage) => {
-              return this.applySettings(error);
-            });
+      this.connector
+        .connect(provider, network.chainID)
+        .then((connect: IConnectorMessage) => {
+          return this.applySettings(connect);
         })
-        .catch((err) => {
-          console.log('chooseProvider', err);
+        .catch((error: IConnectorMessage) => {
+          return this.applySettings(error);
         }),
     ];
 
@@ -97,7 +100,7 @@ export class ConnectWallet {
         this.initWeb3(
           connect[0].provider === 'Web3'
             ? Web3.givenProvider
-            : connect[0].provider
+            : connect[0].provider,
         );
       }
       return connect[0].connected;
@@ -111,13 +114,17 @@ export class ConnectWallet {
    * @returns return selected provider class.
    * @example connectWallet.chooseProvider('MetaMask'); //=> new MetamaskConnect()
    */
-  private async chooseProvider(name: string): Promise<any> {
+  private chooseProvider(name: string): MetamaskConnect | WalletsConnect {
     this.providerName = name;
     switch (name) {
       case 'MetaMask':
         return new MetamaskConnect();
       case 'WalletConnect':
         return new WalletsConnect();
+      case 'WalletLink':
+        return new WalletLinkConnect();
+      case 'KardiaChain':
+        return new KardiaChainConnect();
     }
   }
 
@@ -140,8 +147,17 @@ export class ConnectWallet {
    *
    * @example connectWallet.getConnector();
    */
-  public getConnector(): any {
+  public getConnector(): MetamaskConnect | WalletsConnect {
     return this.connector;
+  }
+
+  /**
+   * Geting current providerName
+   *
+   * @example connectWallet.getproviderName();
+   */
+  public getproviderName(): string {
+    return this.providerName;
   }
 
   /**
@@ -151,7 +167,9 @@ export class ConnectWallet {
    * @returns return completedata with settings parameters
    * @example connectWallet.applySettings(data); //=> data.type etc.
    */
-  private applySettings(data: IConnectorMessage | IError | IConnect): any {
+  private applySettings(
+    data: IConnectorMessage | IError | IConnect,
+  ): IConnectorMessage | IError | IConnect {
     if (this.settings.providerType) {
       data.type = this.providerName;
     }
@@ -168,7 +186,27 @@ export class ConnectWallet {
     return new Observable((observer) => {
       this.connector.getAccounts().subscribe(
         (connectInfo: IConnect) => {
-          if (connectInfo.network.chainID !== this.network.chainID) {
+          try {
+            if (connectInfo.network.chainID !== this.network.chainID) {
+              const error: IError = {
+                code: 4,
+                message: {
+                  title: 'Error',
+                  subtitle: 'Chain error',
+                  text:
+                    'Please choose ' +
+                    parameters.chainsMap[
+                      parameters.chainIDMap[this.network.chainID]
+                    ].name +
+                    ' network in your provider.',
+                },
+              };
+
+              observer.error(this.applySettings(error));
+            } else {
+              observer.next(this.applySettings(connectInfo));
+            }
+          } catch (err) {
             const error: IError = {
               code: 4,
               message: {
@@ -184,17 +222,15 @@ export class ConnectWallet {
             };
 
             observer.error(this.applySettings(error));
-          } else {
-            observer.next(this.applySettings(connectInfo));
           }
         },
         (error: IError) => {
           observer.error(this.applySettings(error));
-        }
+        },
       );
-      return {
-        unsubscribe(): any {},
-      };
+      // return {
+      //   unsubscribe(): any {},
+      // };
     });
   }
 
@@ -265,6 +301,10 @@ export class ConnectWallet {
     });
   }
 
+  public getContract(contract: INoNameContract): Contract {
+    return new this.Web3.eth.Contract(contract.abi, contract.address);
+  }
+
   /**
    * Add contract to Web3. Provide contract name, address and abi code to initialize it, then you will
    * able to use contract(name) function to get contract from web3 and use contract methods.
@@ -278,7 +318,7 @@ export class ConnectWallet {
       try {
         this.contracts[contract.name] = new this.Web3.eth.Contract(
           contract.abi,
-          contract.address
+          contract.address,
         );
         resolve(true);
       } catch {
@@ -302,7 +342,7 @@ export class ConnectWallet {
    * @returns return Web3
    * @example connectWallet.currentWeb3();
    */
-  public currentWeb3 = () => this.Web3;
+  public currentWeb3 = (): Web3 => this.Web3;
 
   /**
    * Get account balance from ethereum blockchain. Provide address in function arguments to recive address balance
@@ -312,8 +352,9 @@ export class ConnectWallet {
    * @returns return address balance.
    * @example connectWallet.getBalance(address).then((balance: string)=> {console.log(balance)});
    */
-  public getBalance = (address: string): Promise<string | number> =>
-    this.Web3.eth.getBalance(address);
+  public getBalance = (address: string): Promise<string | number> => {
+    return this.Web3.eth.getBalance(address);
+  };
 
   /**
    * Logout function. Use this function if you want to do logout from your application. Function will reset
@@ -323,4 +364,8 @@ export class ConnectWallet {
    * @example connectWallet.resetConect();
    */
   public resetConect = (): void => (this.connector = undefined);
+
+  public signMsg = (userAddr: string, msg: string): Promise<any> => {
+    return this.Web3.eth.personal.sign(msg, userAddr, '');
+  };
 }

@@ -9,8 +9,9 @@ export const parameters = {
     42: '0x2a',
     128: '0x80',
     256: '0x100',
-    // 56: '0x38',
-    // 97: '0x61',
+    69: 69,
+    56: '0x38',
+    97: '0x61',
   },
   chainsMap: {
     '0x1': {
@@ -41,14 +42,18 @@ export const parameters = {
       name: 'heco-testnet',
       chainID: 256,
     },
-    // '0x38': {
-    //   name: 'binance',
-    //   chainID: 56,
-    // },
-    // '0x61': {
-    //   name: 'binance-testnet',
-    //   chainID: 97,
-    // },
+    69: {
+      name: 'KardiachainTestnet',
+      chainID: 69,
+    },
+    '0x38': {
+      name: 'binance',
+      chainID: 56,
+    },
+    '0x61': {
+      name: 'binance-testnet',
+      chainID: 97,
+    },
   },
 };
 

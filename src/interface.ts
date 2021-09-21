@@ -1,5 +1,5 @@
 import { Contract } from 'web3-eth-contract';
-import { AbiCoder } from 'web3-eth-abi';
+import { AbiItem } from 'web3-utils';
 
 export interface IProvider {
   name: string;
@@ -10,7 +10,7 @@ export interface IProvider {
       infura?: string[];
     };
     infura?: {
-      infuraID: string;
+      infuraId: string;
     };
     rpc?: {
       rpc: {
@@ -76,10 +76,13 @@ export interface IContract {
   [index: string]: Contract;
 }
 
-export interface IAddContract {
-  name: string;
+export interface INoNameContract {
   address: string;
-  abi: Array<AbiCoder>;
+  abi: AbiItem | Array<AbiItem>;
+}
+
+export interface IAddContract extends INoNameContract {
+  name: string;
 }
 
 export interface IChain {
