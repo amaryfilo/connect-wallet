@@ -1,7 +1,7 @@
 {
   "name": "@amfi/connect-wallet",
   "version": "1.1.0",
-  "description": "Connect Crypto Wallet by using MetaMask browser extention or mobile application and WalletConnect service by scanning Wallet Qr-code.",
+  "description": "Connect Crypto Wallet by using WalletLink, KardiaChain, MetaMask browser extentions or mobile application and WalletConnect service by scanning Wallet Qr-code.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/laumiqv/connect-wallet#readme",
   "dependencies": {
+    "@walletconnect/web3-provider": "^1.3.6",
     "rxjs": "~6.6.0",
     "tslib": "^2.0.0",
     "walletlink": "^2.1.11",
