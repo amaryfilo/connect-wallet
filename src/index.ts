@@ -5,7 +5,7 @@ import { Contract } from 'web3-eth-contract';
 import { MetamaskConnect } from './metamask';
 import { WalletsConnect } from './wallet-connect';
 import { WalletLinkConnect } from './wallet-link';
-import { KardiachainConnect } from './kardiachain';
+import { KardiaChainConnect } from './kardiachain';
 
 import {
   INetwork,
@@ -30,7 +30,7 @@ export class ConnectWallet {
     'MetaMask',
     'WalletConnect',
     'WalletLink',
-    'Kardiachain',
+    'KardiaChain',
   ];
 
   private network: INetwork;
@@ -123,8 +123,8 @@ export class ConnectWallet {
         return new WalletsConnect();
       case 'WalletLink':
         return new WalletLinkConnect();
-      case 'Kardiachain':
-        return new KardiachainConnect();
+      case 'KardiaChain':
+        return new KardiaChainConnect();
     }
   }
 

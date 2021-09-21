@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-export class KardiachainConnect extends AbstractConnector {
+export class KardiaChainConnect extends AbstractConnector {
   public connector: any;
   private chainID: number;
 
@@ -110,7 +110,6 @@ export class KardiachainConnect extends AbstractConnector {
                   method: 'net_version',
                 })
                 .then((chainID: string) => {
-                  debugger;
                   this.chainID = +chainID;
                   onNext(observer, {
                     address: accounts[0],
