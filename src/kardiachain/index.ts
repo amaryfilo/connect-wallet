@@ -92,11 +92,18 @@ export class KardiaChainConnect extends AbstractConnector {
 
         this.connector.on('accountsChanged', (address: Array<any>) => {
           if (address.length) {
-            onNext(observer, {
-              address: address[0],
-              network:
-                parameters.chainsMap[parameters.chainIDMap[+this.chainID]],
-            });
+            this.connector
+              .request({
+                method: 'net_version',
+              })
+              .then((chainID: string) => {
+                this.chainID = +chainID;
+                onNext(observer, {
+                  address: address[0],
+                  network:
+                    parameters.chainsMap[parameters.chainIDMap[+chainID]],
+                });
+              });
           } else {
             onError(observer, {
               code: 3,
