@@ -10,6 +10,7 @@ export const parameters = {
     128: '0x80',
     256: '0x100',
     69: 69,
+    0: 0,
     56: '0x38',
     97: '0x61',
   },
@@ -44,6 +45,10 @@ export const parameters = {
     },
     69: {
       name: 'KardiachainTestnet',
+      chainID: 69,
+    },
+    0: {
+      name: 'Kardiachain',
       chainID: 69,
     },
     '0x38': {
