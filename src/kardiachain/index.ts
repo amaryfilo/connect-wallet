@@ -93,7 +93,12 @@ export class KardiaChainConnect extends AbstractConnector {
         });
 
         this.connector.on('accountsChanged', (address: Array<any>) => {
-          if (address[0].toUpperCase() !== this.currentAddr.toUpperCase()) {
+          if (
+            (this.currentAddr &&
+              address[0].toUpperCase() !== this.currentAddr.toUpperCase()) ||
+            address[0].toUpperCase() !==
+              this.connector.selectedAddress.toUpperCase()
+          ) {
             if (address.length) {
               this.connector
                 .request({
