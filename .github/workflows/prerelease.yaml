@@ -1,0 +1,19 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Prerelease
+
+on:
+    push:
+        branches:
+            - master
+
+jobs:
+    prerelease:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - name: Make prerelease to npm
+              uses: epeli/npm-release@v2
+              with:
+                  type: prerelease
+                  token: ${{ secrets.NPM_TOKEN }}
