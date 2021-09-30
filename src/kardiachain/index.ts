@@ -13,6 +13,7 @@ declare global {
 export class KardiaChainConnect extends AbstractConnector {
   public connector: any;
   private chainID: number;
+  private currentAddr: string;
 
   /**
    * KardiaChainConnect class to connect browser KardiaChain Wallet extention to your application
@@ -82,6 +83,7 @@ export class KardiaChainConnect extends AbstractConnector {
 
     return new Observable((observer) => {
       if (this.connector && this.connector.isKaiWallet) {
+        this.currentAddr = this.connector.selectedAddress;
         this.connector.on('chainChanged', async (chainId: string) => {
           const accounts = await this.ethRequestAccounts();
           onNext(observer, {
@@ -91,21 +93,30 @@ export class KardiaChainConnect extends AbstractConnector {
         });
 
         this.connector.on('accountsChanged', (address: Array<any>) => {
-          if (address.length) {
-            onNext(observer, {
-              address: address[0],
-              network:
-                parameters.chainsMap[parameters.chainIDMap[+this.chainID]],
-            });
-          } else {
-            onError(observer, {
-              code: 3,
-              message: {
-                title: 'Error',
-                subtitle: 'Authorized error',
-                message: 'You are not authorized.',
-              },
-            });
+          if (address[0].toUpperCase() !== this.currentAddr.toUpperCase()) {
+            if (address.length) {
+              this.connector
+                .request({
+                  method: 'net_version',
+                })
+                .then((chainID: string) => {
+                  this.chainID = +chainID;
+                  onNext(observer, {
+                    address: address[0],
+                    network:
+                      parameters.chainsMap[parameters.chainIDMap[+chainID]],
+                  });
+                });
+            } else {
+              onError(observer, {
+                code: 3,
+                message: {
+                  title: 'Error',
+                  subtitle: 'Authorized error',
+                  message: 'You are not authorized.',
+                },
+              });
+            }
           }
         });
 
@@ -129,6 +140,7 @@ export class KardiaChainConnect extends AbstractConnector {
                 })
                 .then((chainID: string) => {
                   this.chainID = +chainID;
+                  this.currentAddr = accounts[0];
                   onNext(observer, {
                     address: accounts[0],
                     network:
