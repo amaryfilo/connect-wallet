@@ -100,6 +100,7 @@ export class KardiaChainConnect extends AbstractConnector {
                   method: 'net_version',
                 })
                 .then((chainID: string) => {
+                  this.currentAddr = address[0];
                   this.chainID = +chainID;
                   onNext(observer, {
                     address: address[0],
