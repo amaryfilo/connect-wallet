@@ -49,7 +49,7 @@ export const parameters = {
     },
     0: {
       name: 'Kardiachain',
-      chainID: 69,
+      chainID: 0,
     },
     '0x38': {
       name: 'binance',
