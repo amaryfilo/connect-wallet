@@ -13,6 +13,8 @@ export const parameters = {
     0: 0,
     56: '0x38',
     97: '0x61',
+    137: '0x89',
+    80001: '0x13881',
   },
   chainsMap: {
     '0x1': {
@@ -58,6 +60,14 @@ export const parameters = {
     '0x61': {
       name: 'binance-testnet',
       chainID: 97,
+    },
+    '0x89': {
+      name: 'polygon',
+      chainID: 137,
+    },
+    '0x13881': {
+      name: 'polygon-testnet',
+      chainID: 80001,
     },
   },
 };
