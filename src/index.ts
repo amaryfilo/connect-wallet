@@ -134,7 +134,7 @@ export class ConnectWallet {
    * @param {Any} provider array with provider information.
    * @example connectWallet.initWeb3(provider);
    */
-  private initWeb3(provider: any): void {
+  public initWeb3(provider: any): void {
     if (this.Web3) {
       this.Web3.setProvider(provider);
     } else {
