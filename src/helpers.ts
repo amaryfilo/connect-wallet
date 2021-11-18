@@ -15,6 +15,8 @@ export const parameters = {
     97: '0x61',
     137: '0x89',
     80001: '0x13881',
+    43113: '0xa869',
+    43114: '0xa86a',
   },
   chainsMap: {
     '0x1': {
@@ -69,6 +71,14 @@ export const parameters = {
       name: 'polygon-testnet',
       chainID: 80001,
     },
+    '0xa86a': {
+      name: 'avalanche-testnet',
+      chainID: 43114,
+    },
+    '0xa869': {
+      name: 'avalanche',
+      chainID: 43113,
+    },
   },
 };
 
@@ -87,7 +97,7 @@ export const codeMap = {
   },
   4: {
     type: 'Error',
-    name: 'Chain not selected or nnot equal to settings chain',
+    name: 'Chain not selected or not equal to settings chain',
   },
   5: {
     type: 'Error',
