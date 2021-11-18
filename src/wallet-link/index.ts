@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 import WalletLink from 'walletlink';
 
-import { IConnectorMessage, IProvider } from '../interface';
+import { IConnectorMessage, IProvider, INetwork } from '../interface';
 import { parameters } from '../helpers';
 import { AbstractConnector } from '../abstract-connector';
 
@@ -14,8 +14,9 @@ export class WalletLinkConnect extends AbstractConnector {
    * using connect wallet.
    */
 
-  constructor() {
+  constructor(network: INetwork) {
     super();
+    this.chainID = network.chainID;
   }
 
   /**
@@ -25,10 +26,7 @@ export class WalletLinkConnect extends AbstractConnector {
    * @returns return connect status and connect information with provider for Web3.
    * @example this.connect().then((connector: IConnectorMessage) => console.log(connector),(err: IConnectorMessage) => console.log(err));
    */
-  public connect(
-    provider: IProvider,
-    usedChain: number,
-  ): Promise<IConnectorMessage> {
+  public connect(provider: IProvider): Promise<IConnectorMessage> {
     return new Promise<any>((resolve, reject) => {
       if (typeof window.ethereum && window.ethereum.isWalletLink === true) {
         this.connector = window.ethereum;
@@ -49,12 +47,11 @@ export class WalletLinkConnect extends AbstractConnector {
           overrideIsMetaMask: true,
         });
 
-        const chain = parameters.chainsMap[parameters.chainIDMap[usedChain]];
-        this.chainID = chain.chainID;
+        const chain = parameters.chainsMap[parameters.chainIDMap[this.chainID]];
 
         this.connector = walletLink.makeWeb3Provider(
           `https://${chain.name}.infura.io/v3/${provider.provider.infura.infuraId}`,
-          usedChain,
+          this.chainID,
         );
         resolve({
           code: 1,

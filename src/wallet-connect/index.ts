@@ -22,10 +22,7 @@ export class WalletsConnect extends AbstractConnector {
    * @returns return connect status and connect information with provider for Web3.
    * @example this.connect().then((connector: IConnectorMessage) => console.log(connector),(err: IConnectorMessage) => console.log(err));
    */
-  public async connect(
-    provider: IProvider,
-    chainUsed,
-  ): Promise<IConnectorMessage> {
+  public async connect(provider: IProvider): Promise<IConnectorMessage> {
     return new Promise<any>(async (resolve, reject) => {
       this.connector = new WalletConnectProvider(
         provider.provider[provider.useProvider],

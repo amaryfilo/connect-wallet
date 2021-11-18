@@ -58,9 +58,18 @@ export interface ISettings {
   providerType?: boolean;
 }
 
-export interface INetwork {
+export interface INativeCurrency {
   name: string;
+  symbol: string;
+  decimals: number;
+}
+
+export interface INetwork {
+  chainName: string;
   chainID: number;
+  nativeCurrency?: INativeCurrency;
+  rpc?: string;
+  blockExplorerUrl?: string;
 }
 
 export interface IMessageProvider {

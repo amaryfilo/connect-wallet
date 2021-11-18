@@ -86,7 +86,7 @@ export class ConnectWallet {
     this.connector = this.chooseProvider(provider.name);
     const connectPromises = [
       this.connector
-        .connect(provider, network.chainID)
+        .connect(provider)
         .then((connect: IConnectorMessage) => {
           return this.applySettings(connect);
         })
@@ -118,11 +118,11 @@ export class ConnectWallet {
     this.providerName = name;
     switch (name) {
       case 'MetaMask':
-        return new MetamaskConnect();
+        return new MetamaskConnect(this.network);
       case 'WalletConnect':
         return new WalletsConnect();
       case 'WalletLink':
-        return new WalletLinkConnect();
+        return new WalletLinkConnect(this.network);
       case 'KardiaChain':
         return new KardiaChainConnect();
     }

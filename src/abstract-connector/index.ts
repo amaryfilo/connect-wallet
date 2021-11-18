@@ -8,10 +8,7 @@ export abstract class AbstractConnector {
 
   constructor() {}
 
-  public abstract connect(
-    provider?: IProvider,
-    chainUsed?: number,
-  ): Promise<IConnectorMessage>;
+  public abstract connect(provider?: IProvider): Promise<IConnectorMessage>;
 
   public abstract getAccounts(): Observable<any>;
 }
