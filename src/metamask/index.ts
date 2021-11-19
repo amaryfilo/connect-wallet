@@ -1,7 +1,13 @@
 import { Observable } from 'rxjs';
 
-import { IConnectorMessage, INetwork, INativeCurrency } from '../interface';
-import { parameters } from '../helpers';
+import {
+  IConnectorMessage,
+  INetwork,
+  INativeCurrency,
+  IEvent,
+  IEventError,
+} from '../interface';
+import { parameters, codeMap } from '../helpers';
 import { AbstractConnector } from '../abstract-connector';
 
 export class MetamaskConnect extends AbstractConnector {
@@ -118,6 +124,50 @@ export class MetamaskConnect extends AbstractConnector {
     }
   }
 
+  public eventSubscriber(): Observable<IEvent | IEventError> {
+    return new Observable((observer) => {
+      this.connector.on('chainChanged', async (chainId: string) => {
+        const accounts = await this.ethRequestAccounts();
+
+        if (this.chainID !== parseInt(chainId)) {
+          observer.error({
+            code: 4,
+            address: accounts[0],
+            message: {
+              title: 'Error',
+              subtitle: 'chainChanged error',
+              message: codeMap[4].name,
+            },
+          });
+        }
+        observer.next({
+          address: accounts[0],
+          network: parameters.chainsMap[chainId],
+          name: 'chainChanged',
+        });
+      });
+
+      this.connector.on('accountsChanged', (address: Array<any>) => {
+        if (address.length) {
+          observer.next({
+            address: address[0],
+            network: parameters.chainsMap[parameters.chainIDMap[+this.chainID]],
+            name: 'accountsChanged',
+          });
+        } else {
+          observer.error({
+            code: 3,
+            message: {
+              title: 'Error',
+              subtitle: 'Authorized error',
+              message: codeMap[3].name,
+            },
+          });
+        }
+      });
+    });
+  }
+
   /**
    * Get account address and chain information from metamask extention.
    *
@@ -138,33 +188,6 @@ export class MetamaskConnect extends AbstractConnector {
       this.checkNet()
         .then(() => {
           if (this.connector && this.connector.isMetaMask) {
-            this.connector.on('chainChanged', async (chainId: string) => {
-              const accounts = await this.ethRequestAccounts();
-              onNext(observer, {
-                address: accounts[0],
-                network: parameters.chainsMap[chainId],
-              });
-            });
-
-            this.connector.on('accountsChanged', (address: Array<any>) => {
-              if (address.length) {
-                onNext(observer, {
-                  address: address[0],
-                  network:
-                    parameters.chainsMap[parameters.chainIDMap[+this.chainID]],
-                });
-              } else {
-                onError(observer, {
-                  code: 3,
-                  message: {
-                    title: 'Error',
-                    subtitle: 'Authorized error',
-                    message: 'You are not authorized.',
-                  },
-                });
-              }
-            });
-
             this.ethRequestAccounts().then((accounts) => {
               if (!accounts[0]) {
                 this.connector.enable().catch(() => {

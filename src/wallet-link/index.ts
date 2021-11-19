@@ -1,7 +1,13 @@
 import { Observable } from 'rxjs';
 import WalletLink from 'walletlink';
 
-import { IConnectorMessage, IProvider, INetwork } from '../interface';
+import {
+  IConnectorMessage,
+  IProvider,
+  INetwork,
+  IEvent,
+  IEventError,
+} from '../interface';
 import { parameters } from '../helpers';
 import { AbstractConnector } from '../abstract-connector';
 
@@ -81,6 +87,37 @@ export class WalletLinkConnect extends AbstractConnector {
     return this.connector.enable();
   }
 
+  public eventSubscriber(): Observable<IEvent | IEventError> {
+    return new Observable((observer) => {
+      // this.connector.on('chainChanged', async (chainId: string) => {
+      //   const accounts = await this.ethRequestAccounts();
+      //   onNext(observer, {
+      //     address: accounts[0],
+      //     network: parameters.chainsMap[parameters.chainIDMap[+chainId]],
+      //   });
+      // });
+
+      this.connector.on('accountsChanged', (address: Array<any>) => {
+        if (address.length) {
+          observer.next({
+            address: address[0],
+            network: parameters.chainsMap[parameters.chainIDMap[+this.chainID]],
+            name: 'accountsChanged',
+          });
+        } else {
+          observer.error({
+            code: 3,
+            message: {
+              title: 'Error',
+              subtitle: 'Authorized error',
+              text: 'You are not authorized.',
+            },
+          });
+        }
+      });
+    });
+  }
+
   /**
    * Get account address and chain information from Coinbase Wallet extention.
    *
@@ -99,33 +136,6 @@ export class WalletLinkConnect extends AbstractConnector {
 
     return new Observable((observer) => {
       if (this.connector) {
-        // this.connector.on('chainChanged', async (chainId: string) => {
-        //   const accounts = await this.ethRequestAccounts();
-        //   onNext(observer, {
-        //     address: accounts[0],
-        //     network: parameters.chainsMap[parameters.chainIDMap[+chainId]],
-        //   });
-        // });
-
-        this.connector.on('accountsChanged', (address: Array<any>) => {
-          if (address.length) {
-            onNext(observer, {
-              address: address[0],
-              network:
-                parameters.chainsMap[parameters.chainIDMap[+this.chainID]],
-            });
-          } else {
-            onError(observer, {
-              code: 3,
-              message: {
-                title: 'Error',
-                subtitle: 'Authorized error',
-                message: 'You are not authorized.',
-              },
-            });
-          }
-        });
-
         this.ethRequestAccounts()
           .then((accounts) => {
             if (!accounts[0]) {

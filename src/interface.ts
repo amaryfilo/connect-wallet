@@ -23,6 +23,24 @@ export interface IProvider {
 
 export type ContractWeb3 = Contract;
 
+export interface IEvent {
+  name: string;
+  address: string;
+  network: {
+    name: string;
+    chainId: number;
+  };
+}
+
+export interface IEventError extends IEvent {
+  code: number;
+  message?: {
+    title: string;
+    subtitle: string;
+    text: string;
+  };
+}
+
 export interface IConnect {
   address: string;
   type?: string;

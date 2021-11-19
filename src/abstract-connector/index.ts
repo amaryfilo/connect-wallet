@@ -1,7 +1,11 @@
 import { Observable } from 'rxjs';
-import Web3 from 'web3';
 
-import { IConnectorMessage, IProvider } from '../interface';
+import {
+  IConnectorMessage,
+  IProvider,
+  IEvent,
+  IEventError,
+} from '../interface';
 
 export abstract class AbstractConnector {
   public abstract connector: any;
@@ -9,6 +13,8 @@ export abstract class AbstractConnector {
   constructor() {}
 
   public abstract connect(provider?: IProvider): Promise<IConnectorMessage>;
+
+  public abstract eventSubscriber(): Observable<IEvent | IEventError>;
 
   public abstract getAccounts(): Observable<any>;
 }
