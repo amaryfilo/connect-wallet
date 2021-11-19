@@ -72,11 +72,11 @@ export const parameters = {
       chainID: 80001,
     },
     '0xa86a': {
-      name: 'avalanche-testnet',
+      name: 'avalanche',
       chainID: 43114,
     },
     '0xa869': {
-      name: 'avalanche',
+      name: 'avalanche-testnet',
       chainID: 43113,
     },
   },
