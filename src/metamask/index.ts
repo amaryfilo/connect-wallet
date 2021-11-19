@@ -77,14 +77,6 @@ export class MetamaskConnect extends AbstractConnector {
   }
 
   private async checkNet(): Promise<any> {
-    if (
-      !this.chainName ||
-      !this.nativeCurrency ||
-      !this.rpc ||
-      !this.blockExplorerUrl
-    ) {
-      return true;
-    }
     try {
       const currentChain = await this.getChainId();
 
@@ -97,6 +89,14 @@ export class MetamaskConnect extends AbstractConnector {
           return true;
         } catch (err: any) {
           if (err.code === 4902) {
+            if (
+              !this.chainName ||
+              !this.nativeCurrency ||
+              !this.rpc ||
+              !this.blockExplorerUrl
+            ) {
+              return true;
+            }
             try {
               await this.connector.request({
                 method: 'wallet_addEthereumChain',
