@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 
-import { IConnectorMessage } from '../interface';
+import { IConnectorMessage, IEventError, IEvent } from '../interface';
 import { parameters } from '../helpers';
 import { AbstractConnector } from '../abstract-connector';
 
@@ -65,6 +65,54 @@ export class KardiaChainConnect extends AbstractConnector {
     return this.connector.request({ method: 'eth_requestAccounts' });
   }
 
+  public eventSubscriber(): Observable<IEvent | IEventError> {
+    return new Observable((observer) => {
+      this.connector.on('chainChanged', async (chainId: string) => {
+        const accounts = await this.ethRequestAccounts();
+        observer.next({
+          address: accounts[0],
+          network: parameters.chainsMap[chainId],
+          name: 'chainChanged',
+        });
+      });
+
+      this.connector.on('accountsChanged', (address: Array<any>) => {
+        if (
+          (this.currentAddr &&
+            address[0].toUpperCase() !== this.currentAddr.toUpperCase()) ||
+          address[0].toUpperCase() !==
+            this.connector.selectedAddress.toUpperCase()
+        ) {
+          if (address.length) {
+            this.connector
+              .request({
+                method: 'net_version',
+              })
+              .then((chainID: string) => {
+                this.currentAddr = address[0];
+                this.chainID = +chainID;
+                observer.next({
+                  address: address[0],
+                  network:
+                    parameters.chainsMap[parameters.chainIDMap[+chainID]],
+                  name: 'accountsChanged',
+                });
+              });
+          } else {
+            observer.error({
+              code: 3,
+              message: {
+                title: 'Error',
+                subtitle: 'Authorized error',
+                message: 'You are not authorized.',
+              },
+            });
+          }
+        }
+      });
+    });
+  }
+
   /**
    * Get account address and chain information from KardiaChain Wallet extention.
    *
@@ -84,47 +132,6 @@ export class KardiaChainConnect extends AbstractConnector {
     return new Observable((observer) => {
       if (this.connector && this.connector.isKaiWallet) {
         this.currentAddr = this.connector.selectedAddress;
-        this.connector.on('chainChanged', async (chainId: string) => {
-          const accounts = await this.ethRequestAccounts();
-          onNext(observer, {
-            address: accounts[0],
-            network: parameters.chainsMap[chainId],
-          });
-        });
-
-        this.connector.on('accountsChanged', (address: Array<any>) => {
-          if (
-            (this.currentAddr &&
-              address[0].toUpperCase() !== this.currentAddr.toUpperCase()) ||
-            address[0].toUpperCase() !==
-              this.connector.selectedAddress.toUpperCase()
-          ) {
-            if (address.length) {
-              this.connector
-                .request({
-                  method: 'net_version',
-                })
-                .then((chainID: string) => {
-                  this.currentAddr = address[0];
-                  this.chainID = +chainID;
-                  onNext(observer, {
-                    address: address[0],
-                    network:
-                      parameters.chainsMap[parameters.chainIDMap[+chainID]],
-                  });
-                });
-            } else {
-              onError(observer, {
-                code: 3,
-                message: {
-                  title: 'Error',
-                  subtitle: 'Authorized error',
-                  message: 'You are not authorized.',
-                },
-              });
-            }
-          }
-        });
 
         this.ethRequestAccounts().then((accounts) => {
           if (!accounts[0]) {

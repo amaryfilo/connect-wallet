@@ -20,11 +20,17 @@ import {
   ContractWeb3,
   IChain,
   INoNameContract,
+  IEvent,
+  IEventError,
 } from './interface';
 import { parameters, addChains } from './helpers';
 
 export class ConnectWallet {
-  private connector: MetamaskConnect | WalletsConnect;
+  private connector:
+    | MetamaskConnect
+    | WalletsConnect
+    | WalletLinkConnect
+    | KardiaChainConnect;
   private providerName: string;
   private availableProviders: string[] = [
     'MetaMask',
@@ -86,7 +92,7 @@ export class ConnectWallet {
     this.connector = this.chooseProvider(provider.name);
     const connectPromises = [
       this.connector
-        .connect(provider, network.chainID)
+        .connect(provider)
         .then((connect: IConnectorMessage) => {
           return this.applySettings(connect);
         })
@@ -118,11 +124,11 @@ export class ConnectWallet {
     this.providerName = name;
     switch (name) {
       case 'MetaMask':
-        return new MetamaskConnect();
+        return new MetamaskConnect(this.network);
       case 'WalletConnect':
         return new WalletsConnect();
       case 'WalletLink':
-        return new WalletLinkConnect();
+        return new WalletLinkConnect(this.network);
       case 'KardiaChain':
         return new KardiaChainConnect();
     }
@@ -147,7 +153,11 @@ export class ConnectWallet {
    *
    * @example connectWallet.getConnector();
    */
-  public getConnector(): MetamaskConnect | WalletsConnect {
+  public getConnector():
+    | MetamaskConnect
+    | WalletsConnect
+    | WalletLinkConnect
+    | KardiaChainConnect {
     return this.connector;
   }
 
@@ -368,4 +378,11 @@ export class ConnectWallet {
   public signMsg = (userAddr: string, msg: string): Promise<any> => {
     return this.Web3.eth.personal.sign(msg, userAddr, '');
   };
+
+  public eventSubscriber(): Observable<IEvent | IEventError> {
+    if (!this.connector) {
+      throw new Error("connector haven't initialized");
+    }
+    return this.connector.eventSubscriber();
+  }
 }

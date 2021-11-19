@@ -1,7 +1,13 @@
 import { Observable } from 'rxjs';
 import WalletLink from 'walletlink';
 
-import { IConnectorMessage, IProvider } from '../interface';
+import {
+  IConnectorMessage,
+  IProvider,
+  INetwork,
+  IEvent,
+  IEventError,
+} from '../interface';
 import { parameters } from '../helpers';
 import { AbstractConnector } from '../abstract-connector';
 
@@ -14,8 +20,9 @@ export class WalletLinkConnect extends AbstractConnector {
    * using connect wallet.
    */
 
-  constructor() {
+  constructor(network: INetwork) {
     super();
+    this.chainID = network.chainID;
   }
 
   /**
@@ -25,10 +32,7 @@ export class WalletLinkConnect extends AbstractConnector {
    * @returns return connect status and connect information with provider for Web3.
    * @example this.connect().then((connector: IConnectorMessage) => console.log(connector),(err: IConnectorMessage) => console.log(err));
    */
-  public connect(
-    provider: IProvider,
-    usedChain: number,
-  ): Promise<IConnectorMessage> {
+  public connect(provider: IProvider): Promise<IConnectorMessage> {
     return new Promise<any>((resolve, reject) => {
       if (typeof window.ethereum && window.ethereum.isWalletLink === true) {
         this.connector = window.ethereum;
@@ -49,12 +53,11 @@ export class WalletLinkConnect extends AbstractConnector {
           overrideIsMetaMask: true,
         });
 
-        const chain = parameters.chainsMap[parameters.chainIDMap[usedChain]];
-        this.chainID = chain.chainID;
+        const chain = parameters.chainsMap[parameters.chainIDMap[this.chainID]];
 
         this.connector = walletLink.makeWeb3Provider(
           `https://${chain.name}.infura.io/v3/${provider.provider.infura.infuraId}`,
-          usedChain,
+          this.chainID,
         );
         resolve({
           code: 1,
@@ -84,6 +87,37 @@ export class WalletLinkConnect extends AbstractConnector {
     return this.connector.enable();
   }
 
+  public eventSubscriber(): Observable<IEvent | IEventError> {
+    return new Observable((observer) => {
+      // this.connector.on('chainChanged', async (chainId: string) => {
+      //   const accounts = await this.ethRequestAccounts();
+      //   onNext(observer, {
+      //     address: accounts[0],
+      //     network: parameters.chainsMap[parameters.chainIDMap[+chainId]],
+      //   });
+      // });
+
+      this.connector.on('accountsChanged', (address: Array<any>) => {
+        if (address.length) {
+          observer.next({
+            address: address[0],
+            network: parameters.chainsMap[parameters.chainIDMap[+this.chainID]],
+            name: 'accountsChanged',
+          });
+        } else {
+          observer.error({
+            code: 3,
+            message: {
+              title: 'Error',
+              subtitle: 'Authorized error',
+              text: 'You are not authorized.',
+            },
+          });
+        }
+      });
+    });
+  }
+
   /**
    * Get account address and chain information from Coinbase Wallet extention.
    *
@@ -102,33 +136,6 @@ export class WalletLinkConnect extends AbstractConnector {
 
     return new Observable((observer) => {
       if (this.connector) {
-        // this.connector.on('chainChanged', async (chainId: string) => {
-        //   const accounts = await this.ethRequestAccounts();
-        //   onNext(observer, {
-        //     address: accounts[0],
-        //     network: parameters.chainsMap[parameters.chainIDMap[+chainId]],
-        //   });
-        // });
-
-        this.connector.on('accountsChanged', (address: Array<any>) => {
-          if (address.length) {
-            onNext(observer, {
-              address: address[0],
-              network:
-                parameters.chainsMap[parameters.chainIDMap[+this.chainID]],
-            });
-          } else {
-            onError(observer, {
-              code: 3,
-              message: {
-                title: 'Error',
-                subtitle: 'Authorized error',
-                message: 'You are not authorized.',
-              },
-            });
-          }
-        });
-
         this.ethRequestAccounts()
           .then((accounts) => {
             if (!accounts[0]) {

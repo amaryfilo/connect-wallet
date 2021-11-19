@@ -1,7 +1,12 @@
 import { Observable } from 'rxjs';
 import WalletConnectProvider from '@walletconnect/web3-provider';
 
-import { IConnectorMessage, IProvider } from '../interface';
+import {
+  IConnectorMessage,
+  IProvider,
+  IEvent,
+  IEventError,
+} from '../interface';
 import { parameters } from '../helpers';
 import { AbstractConnector } from '../abstract-connector';
 
@@ -22,10 +27,7 @@ export class WalletsConnect extends AbstractConnector {
    * @returns return connect status and connect information with provider for Web3.
    * @example this.connect().then((connector: IConnectorMessage) => console.log(connector),(err: IConnectorMessage) => console.log(err));
    */
-  public async connect(
-    provider: IProvider,
-    chainUsed,
-  ): Promise<IConnectorMessage> {
+  public async connect(provider: IProvider): Promise<IConnectorMessage> {
     return new Promise<any>(async (resolve, reject) => {
       this.connector = new WalletConnectProvider(
         provider.provider[provider.useProvider],
@@ -58,35 +60,11 @@ export class WalletsConnect extends AbstractConnector {
     });
   }
 
-  /**
-   * Get account address and chain information from connected wallet.
-   *
-   * @returns return an Observable array with data error or connected information.
-   * @example this.getAccounts().subscribe((account: any)=> {console.log('account',account)});
-   */
-  public getAccounts(): Observable<any> {
-    const onError = (observer: any, errorParams: any) => {
-      observer.error(errorParams);
-    };
-
-    const onNext = (observer: any, nextParams: any) => {
-      observer.next(nextParams);
-    };
-
+  public eventSubscriber(): Observable<IEvent | IEventError> {
     return new Observable((observer) => {
-      if (!this.connector.connected) {
-        this.connector.createSession();
-      }
-
-      onNext(observer, {
-        address: this.connector.accounts[0],
-        network:
-          parameters.chainsMap[parameters.chainIDMap[this.connector.chainId]],
-      });
-
       this.connector.on('connect', (error: any, payload: any) => {
         if (error) {
-          onError(observer, {
+          observer.error({
             code: 3,
             message: {
               title: 'Error',
@@ -98,13 +76,13 @@ export class WalletsConnect extends AbstractConnector {
 
         const { accounts, chainId } = payload.params[0];
 
-        onNext(observer, { address: accounts, network: chainId });
+        observer.next({ address: accounts, network: chainId, name: 'connect' });
       });
 
       this.connector.on('disconnect', (error, payload) => {
         if (error) {
           console.log('wallet connect on connect error', error, payload);
-          onError(observer, {
+          observer.error({
             code: 6,
             message: {
               title: 'Error',
@@ -133,6 +111,34 @@ export class WalletsConnect extends AbstractConnector {
 
       this.connector.on('session_request', (error, payload) => {
         console.log(payload, 'session_request');
+      });
+    });
+  }
+
+  /**
+   * Get account address and chain information from connected wallet.
+   *
+   * @returns return an Observable array with data error or connected information.
+   * @example this.getAccounts().subscribe((account: any)=> {console.log('account',account)});
+   */
+  public getAccounts(): Observable<any> {
+    const onError = (observer: any, errorParams: any) => {
+      observer.error(errorParams);
+    };
+
+    const onNext = (observer: any, nextParams: any) => {
+      observer.next(nextParams);
+    };
+
+    return new Observable((observer) => {
+      if (!this.connector.connected) {
+        this.connector.createSession();
+      }
+
+      onNext(observer, {
+        address: this.connector.accounts[0],
+        network:
+          parameters.chainsMap[parameters.chainIDMap[this.connector.chainId]],
       });
 
       return {
