@@ -192,55 +192,70 @@ export class ConnectWallet {
    * @returns return an Observable array with data error or connected.
    * @example connectWallet.getAccounts().subscribe((account: any)=> {console.log('account',account)});
    */
-  public getAccounts(): Observable<IConnect | IError> {
+  public getAccounts(): Observable<IConnect | IError | {address: string} > {
     return new Observable((observer) => {
-      this.connector.getAccounts().subscribe(
-        (connectInfo: IConnect) => {
-          try {
-            if (connectInfo.network.chainID !== this.network.chainID) {
-              const error: IError = {
-                code: 4,
-                message: {
-                  title: 'Error',
-                  subtitle: 'Chain error',
-                  text:
-                    'Please choose ' +
-                    parameters.chainsMap[
-                      parameters.chainIDMap[this.network.chainID]
-                    ].name +
-                    ' network in your provider.',
-                },
-              };
+      if (this.currentWeb3() && !this.connector) {
+        const web3Account =  this.currentWeb3().currentProvider as any
+        if (web3Account.address) {
+          observer.next({
+            address: web3Account.address
+          })
+        } else {
+          const { accounts } = web3Account
+          observer.next({
+            address: accounts[0]
+          })
+        }
+      } else {
+        this.connector.getAccounts().subscribe(
+            (connectInfo: IConnect) => {
+              try {
+                if (connectInfo.network.chainID !== this.network.chainID) {
+                  const error: IError = {
+                    code: 4,
+                    message: {
+                      title: 'Error',
+                      subtitle: 'Chain error',
+                      text:
+                          'Please choose ' +
+                          parameters.chainsMap[
+                              parameters.chainIDMap[this.network.chainID]
+                              ].name +
+                          ' network in your provider.',
+                    },
+                  };
 
+                  observer.error(this.applySettings(error));
+                } else {
+                  observer.next(this.applySettings(connectInfo));
+                }
+              } catch (err) {
+                const error: IError = {
+                  code: 4,
+                  message: {
+                    title: 'Error',
+                    subtitle: 'Chain error',
+                    text:
+                        'Please choose ' +
+                        parameters.chainsMap[
+                            parameters.chainIDMap[this.network.chainID]
+                            ].name +
+                        ' network in your provider.',
+                  },
+                };
+
+                observer.error(this.applySettings(error));
+              }
+            },
+            (error: IError) => {
               observer.error(this.applySettings(error));
-            } else {
-              observer.next(this.applySettings(connectInfo));
-            }
-          } catch (err) {
-            const error: IError = {
-              code: 4,
-              message: {
-                title: 'Error',
-                subtitle: 'Chain error',
-                text:
-                  'Please choose ' +
-                  parameters.chainsMap[
-                    parameters.chainIDMap[this.network.chainID]
-                  ].name +
-                  ' network in your provider.',
-              },
-            };
+            },
+        );
+        // return {
+        //   unsubscribe(): any {},
+        // };
+      }
 
-            observer.error(this.applySettings(error));
-          }
-        },
-        (error: IError) => {
-          observer.error(this.applySettings(error));
-        },
-      );
-      // return {
-      //   unsubscribe(): any {},
-      // };
     });
   }
 
