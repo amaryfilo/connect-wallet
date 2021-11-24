@@ -203,13 +203,13 @@ export class ConnectWallet {
     };
 
     return new Promise((resolve, reject) => {
-      const { chainID } = this.network;
-      const { chainsMap, chainIDMap } = parameters;
-
       if (this.currentWeb3() && !this.connector) {
         const { address, accounts } = this.currentWeb3().currentProvider as any;
         resolve({ address: address || accounts[0] });
       } else if (this.connector) {
+        const { chainID } = this.network;
+        const { chainsMap, chainIDMap } = parameters;
+
         this.connector.getAccounts().then(
           (connectInfo: IConnect) => {
             if (connectInfo.network.chainID !== chainID) {
