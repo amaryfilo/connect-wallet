@@ -57,7 +57,7 @@ export class WalletLinkConnect extends AbstractConnector {
 
         this.connector = walletLink.makeWeb3Provider(
           `https://${chain.name}.infura.io/v3/${provider.provider.infura.infuraId}`,
-          this.chainID,
+          this.chainID
         );
         resolve({
           code: 1,
@@ -125,59 +125,42 @@ export class WalletLinkConnect extends AbstractConnector {
    * @example this.getAccounts().subscribe((account: any)=> {console.log('account',account)});
    */
 
-  public getAccounts(): Observable<any> {
-    const onError = (observer: any, errorParams: any) => {
-      observer.error(errorParams);
+  public getAccounts(): Promise<any> {
+    const error = {
+      code: 3,
+      message: {
+        title: 'Error',
+        subtitle: 'Authorized error',
+        message: 'You are not authorized.',
+      },
     };
-
-    const onNext = (observer: any, nextParams: any) => {
-      observer.next(nextParams);
-    };
-
-    return new Observable((observer) => {
+    return new Promise((resolve, reject) => {
       if (this.connector) {
-        this.ethRequestAccounts()
-          .then((accounts) => {
-            if (!accounts[0]) {
-              this.connector.enable().catch(() => {
-                onError(observer, {
-                  code: 3,
-                  message: {
-                    title: 'Error',
-                    subtitle: 'Authorized error',
-                    message: 'You are not authorized.',
-                  },
-                });
-              });
-            } else {
-              if (accounts[0]) {
-                this.connector
-                  .request({
-                    method: 'net_version',
-                  })
-                  .then((chainID: string) => {
-                    this.chainID = +chainID;
-                    onNext(observer, {
-                      address: accounts[0],
-                      network:
-                        parameters.chainsMap[parameters.chainIDMap[+chainID]],
-                    });
+        this.ethRequestAccounts().then(
+          (accounts) => {
+            if (accounts[0]) {
+              this.connector
+                .request({
+                  method: 'net_version',
+                })
+                .then((chainID: string) => {
+                  this.chainID = +chainID;
+                  resolve({
+                    address: accounts[0],
+                    network:
+                      parameters.chainsMap[parameters.chainIDMap[+chainID]],
                   });
-              } else {
-                onError(observer, {
-                  code: 3,
-                  message: {
-                    title: 'Error',
-                    subtitle: 'Authorized error',
-                    message: 'You are not authorized.',
-                  },
                 });
-              }
+            } else {
+              this.connector.enable().catch(() => {
+                reject(error);
+              });
             }
-          })
-          .catch((err) => {
+          },
+          (err) => {
             console.log(err);
-          });
+          }
+        );
       }
     });
   }

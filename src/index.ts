@@ -73,7 +73,7 @@ export class ConnectWallet {
   public async connect(
     provider: IProvider,
     network: INetwork,
-    settings?: ISettings,
+    settings?: ISettings
   ): Promise<{} | boolean> {
     if (!this.availableProviders.includes(provider.name)) {
       return {
@@ -106,7 +106,7 @@ export class ConnectWallet {
         this.initWeb3(
           connect[0].provider === 'Web3'
             ? Web3.givenProvider
-            : connect[0].provider,
+            : connect[0].provider
         );
       }
       return connect[0].connected;
@@ -178,7 +178,7 @@ export class ConnectWallet {
    * @example connectWallet.applySettings(data); //=> data.type etc.
    */
   private applySettings(
-    data: IConnectorMessage | IError | IConnect,
+    data: IConnectorMessage | IError | IConnect
   ): IConnectorMessage | IError | IConnect {
     if (this.settings.providerType) {
       data.type = this.providerName;
@@ -189,73 +189,50 @@ export class ConnectWallet {
   /**
    * Get account address and chain information from selected wallet provider.
    *
-   * @returns return an Observable array with data error or connected.
-   * @example connectWallet.getAccounts().subscribe((account: any)=> {console.log('account',account)});
+   * @returns return an Promise array with data error or connected.
+   * @example connectWallet.getAccounts().then((account: any)=> console.log('account',account),(err: any => console.log('account', err)));
    */
-  public getAccounts(): Observable<IConnect | IError | {address: string} > {
-    return new Observable((observer) => {
+  public getAccounts(): Promise<IConnect | IError | { address: string }> {
+    const error: IError = {
+      code: 4,
+      message: {
+        title: 'Error',
+        subtitle: 'Chain error',
+        text: '',
+      },
+    };
+
+    return new Promise((resolve, reject) => {
+      const { chainID } = this.network;
+      const { chainsMap, chainIDMap } = parameters;
+
       if (this.currentWeb3() && !this.connector) {
-        const web3Account =  this.currentWeb3().currentProvider as any
-        if (web3Account.address) {
-          observer.next({
-            address: web3Account.address
-          })
-        } else {
-          const { accounts } = web3Account
-          observer.next({
-            address: accounts[0]
-          })
-        }
-      } else {
-        this.connector.getAccounts().subscribe(
-            (connectInfo: IConnect) => {
-              try {
-                if (connectInfo.network.chainID !== this.network.chainID) {
-                  const error: IError = {
-                    code: 4,
-                    message: {
-                      title: 'Error',
-                      subtitle: 'Chain error',
-                      text:
-                          'Please choose ' +
-                          parameters.chainsMap[
-                              parameters.chainIDMap[this.network.chainID]
-                              ].name +
-                          ' network in your provider.',
-                    },
-                  };
+        const { address, accounts } = this.currentWeb3().currentProvider as any;
+        resolve({ address: address || accounts[0] });
+      } else if (this.connector) {
+        this.connector.getAccounts().then(
+          (connectInfo: IConnect) => {
+            if (connectInfo.network.chainID !== chainID) {
+              error.message.text = `Please set network: ${
+                chainsMap[chainIDMap[chainID]].name
+              }.`;
 
-                  observer.error(this.applySettings(error));
-                } else {
-                  observer.next(this.applySettings(connectInfo));
-                }
-              } catch (err) {
-                const error: IError = {
-                  code: 4,
-                  message: {
-                    title: 'Error',
-                    subtitle: 'Chain error',
-                    text:
-                        'Please choose ' +
-                        parameters.chainsMap[
-                            parameters.chainIDMap[this.network.chainID]
-                            ].name +
-                        ' network in your provider.',
-                  },
-                };
-
-                observer.error(this.applySettings(error));
-              }
-            },
-            (error: IError) => {
-              observer.error(this.applySettings(error));
-            },
+              reject(this.applySettings(error));
+            } else {
+              resolve(this.applySettings(connectInfo));
+            }
+          },
+          (error: IError) => {
+            error.code = 7;
+            error.message = null;
+            reject(this.applySettings(error));
+          }
         );
-        // return {
-        //   unsubscribe(): any {},
-        // };
+      } else {
+        error.code = 7;
+        error.message = null;
+        reject(this.applySettings(error));
       }
-
     });
   }
 
@@ -326,6 +303,14 @@ export class ConnectWallet {
     });
   }
 
+  /**
+   * Add contract to Web3 without providing contract name to initialize it, then you will
+   * able to use contract function to get contract from web3 and use contract methods.
+   *
+   * @param {INoNameContract} contract contract object with contract address and abi.
+   * @returns return contract web3 methods.
+   * @example connectWallet.getContract(contract);
+   */
   public getContract(contract: INoNameContract): Contract {
     return new this.Web3.eth.Contract(contract.abi, contract.address);
   }
@@ -343,7 +328,7 @@ export class ConnectWallet {
       try {
         this.contracts[contract.name] = new this.Web3.eth.Contract(
           contract.abi,
-          contract.address,
+          contract.address
         );
         resolve(true);
       } catch {
@@ -390,14 +375,30 @@ export class ConnectWallet {
    */
   public resetConect = (): void => (this.connector = undefined);
 
+  /**
+   * Use this method to sign custom mesaage.
+   *
+   * @example connectWallet.signMsg('0x0000000000000000000', 'some_data').then(data => console.log('sign:', data),err => console.log('sign err:',err));
+   */
   public signMsg = (userAddr: string, msg: string): Promise<any> => {
     return this.Web3.eth.personal.sign(msg, userAddr, '');
   };
 
+  /**
+   * Subscribe to events from current connection: connect, disconnect, chain change, account change and etc.
+   *
+   * @example connectWallet.eventSubscriber().subscribe((event:IEvent) => console.log('event from subscribe', event), (err:IEventError) => console.log('event error', err));
+   */
   public eventSubscriber(): Observable<IEvent | IEventError> {
     if (!this.connector) {
       throw new Error("connector haven't initialized");
     }
-    return this.connector.eventSubscriber();
+
+    return new Observable((observer) => {
+      this.connector.eventSubscriber().subscribe(
+        (event: IEvent) => observer.next(event),
+        (error: IEventError) => observer.error(error)
+      );
+    });
   }
 }
