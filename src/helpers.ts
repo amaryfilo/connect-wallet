@@ -107,6 +107,10 @@ export const codeMap = {
     type: 'Error',
     name: 'Wallet disconnected',
   },
+  7: {
+    type: 'Error',
+    name: 'Cant getting user address',
+  },
 };
 
 export const getCode = (code: number) => codeMap[code];

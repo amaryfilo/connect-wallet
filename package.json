@@ -26,11 +26,11 @@
   },
   "homepage": "https://github.com/laumiqv/connect-wallet#readme",
   "dependencies": {
-    "@walletconnect/web3-provider": "^1.3.6",
+    "@walletconnect/web3-provider": "^1.6.6",
     "rxjs": "~6.6.0",
     "tslib": "^2.0.0",
     "walletlink": "^2.1.11",
-    "web3": "1.3.0"
+    "web3": "^1.6.1"
   },
   "devDependencies": {
     "tslint": "~6.1.0",

@@ -175,67 +175,41 @@ export class MetamaskConnect extends AbstractConnector {
    * @example this.getAccounts().subscribe((account: any)=> {console.log('account',account)});
    */
 
-  public getAccounts(): Observable<any> {
-    const onError = (observer: any, errorParams: any) => {
-      observer.error(errorParams);
+  public getAccounts(): Promise<any> {
+    const error = {
+      code: 3,
+      message: {
+        title: 'Error',
+        subtitle: 'Authorized error',
+        message: 'You are not authorized.',
+      },
     };
 
-    const onNext = (observer: any, nextParams: any) => {
-      observer.next(nextParams);
-    };
-
-    return new Observable((observer) => {
+    return new Promise((resolve, reject) => {
       this.checkNet()
         .then(() => {
-          if (this.connector && this.connector.isMetaMask) {
-            this.ethRequestAccounts().then((accounts) => {
-              if (!accounts[0]) {
-                this.connector.enable().catch(() => {
-                  onError(observer, {
-                    code: 3,
-                    message: {
-                      title: 'Error',
-                      subtitle: 'Authorized error',
-                      message: 'You are not authorized.',
-                    },
+          this.ethRequestAccounts().then((accounts) => {
+            if (accounts[0]) {
+              this.connector
+                .request({
+                  method: 'eth_chainId',
+                })
+                .then((chainID: string) => {
+                  resolve({
+                    address: accounts[0],
+                    network:
+                      parameters.chainsMap[parameters.chainIDMap[+chainID]],
                   });
                 });
-              } else {
-                if (accounts[0]) {
-                  this.connector
-                    .request({
-                      method: 'eth_chainId',
-                    })
-                    .then((chainID: string) => {
-                      onNext(observer, {
-                        address: accounts[0],
-                        network:
-                          parameters.chainsMap[parameters.chainIDMap[+chainID]],
-                      });
-                    });
-                } else {
-                  onError(observer, {
-                    code: 3,
-                    message: {
-                      title: 'Error',
-                      subtitle: 'Authorized error',
-                      message: 'You are not authorized.',
-                    },
-                  });
-                }
-              }
-            });
-          }
+            } else {
+              reject(error);
+            }
+          });
         })
         .catch((err: any) => {
-          onError(observer, {
-            code: 4,
-            message: {
-              title: 'Error',
-              subtitle: 'Authorized error',
-              message: err.message,
-            },
-          });
+          error.code = 4;
+          error.message = err.message;
+          reject(error);
         });
     });
   }

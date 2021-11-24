@@ -30,7 +30,7 @@ export class WalletsConnect extends AbstractConnector {
   public async connect(provider: IProvider): Promise<IConnectorMessage> {
     return new Promise<any>(async (resolve, reject) => {
       this.connector = new WalletConnectProvider(
-        provider.provider[provider.useProvider],
+        provider.provider[provider.useProvider]
       );
       await this.connector
         .enable()
@@ -93,25 +93,45 @@ export class WalletsConnect extends AbstractConnector {
         }
       });
 
-      this.connector.on('wc_sessionUpdate', (error, payload) => {
-        console.log(payload, 'wc_sessionUpdate');
+      this.connector.on(
+        'accountsChanged',
+        (accounts: string[], payload: any) => {
+          console.log('WalletConnect account changed', accounts, payload);
+
+          observer.next({
+            address: accounts[0],
+            network:
+              parameters.chainsMap[
+                parameters.chainIDMap[this.connector.chainId]
+              ],
+            name: 'accountsChanged',
+          });
+        }
+      );
+
+      this.connector.on('chainChanged', (chainId: number) => {
+        console.log('WalletConnect chain changed:', chainId);
       });
 
-      this.connector.on('wc_sessionRequest', (error, payload) => {
-        console.log(payload, 'wc_sessionRequest');
-      });
+      // this.connector.on('wc_sessionUpdate', (error, payload) => {
+      //   console.log(error || payload, 'wc_sessionUpdate');
+      // });
 
-      this.connector.on('call_request', (error, payload) => {
-        console.log(payload, 'call_request');
-      });
+      // this.connector.on('wc_sessionRequest', (error, payload) => {
+      //   console.log(error || payload, 'wc_sessionRequest');
+      // });
 
-      this.connector.on('session_update', (error, payload) => {
-        console.log(payload, 'session_update');
-      });
+      // this.connector.on('call_request', (error, payload) => {
+      //   console.log(error || payload, 'call_request');
+      // });
 
-      this.connector.on('session_request', (error, payload) => {
-        console.log(payload, 'session_request');
-      });
+      // this.connector.on('session_update', (error, payload) => {
+      //   console.log(error || payload, 'session_update');
+      // });
+
+      // this.connector.on('session_request', (error, payload) => {
+      //   console.log(error || payload, 'session_request');
+      // });
     });
   }
 
@@ -121,29 +141,21 @@ export class WalletsConnect extends AbstractConnector {
    * @returns return an Observable array with data error or connected information.
    * @example this.getAccounts().subscribe((account: any)=> {console.log('account',account)});
    */
-  public getAccounts(): Observable<any> {
-    const onError = (observer: any, errorParams: any) => {
-      observer.error(errorParams);
-    };
-
-    const onNext = (observer: any, nextParams: any) => {
-      observer.next(nextParams);
-    };
-
-    return new Observable((observer) => {
+  public getAccounts(): Promise<any> {
+    return new Promise((resolve, reject) => {
       if (!this.connector.connected) {
-        this.connector.createSession();
+        this.connector.createSessithis.connector.on();
       }
 
-      onNext(observer, {
+      resolve({
         address: this.connector.accounts[0],
         network:
           parameters.chainsMap[parameters.chainIDMap[this.connector.chainId]],
       });
 
-      return {
-        unsubscribe(): any {},
-      };
+      // return {
+      //   unsubscribe(): any {},
+      // };
     });
   }
 }
