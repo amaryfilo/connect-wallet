@@ -17,6 +17,8 @@ export const parameters = {
     80001: '0x13881',
     43113: '0xa869',
     43114: '0xa86a',
+    42220: '0xa4ec',
+    44787: '0xaef3',
   },
   chainsMap: {
     '0x1': {
@@ -78,6 +80,14 @@ export const parameters = {
     '0xa869': {
       name: 'avalanche-testnet',
       chainID: 43113,
+    },
+    '0xa4ec': {
+      name: 'celo',
+      chainID: 42220,
+    },
+    '0xaef3': {
+      name: 'celo-testnet',
+      chainID: 44787,
     },
   },
 };
