@@ -73,7 +73,7 @@ export class ConnectWallet {
   public async connect(
     provider: IProvider,
     network: INetwork,
-    settings?: ISettings
+    settings?: ISettings,
   ): Promise<{} | boolean> {
     if (!this.availableProviders.includes(provider.name)) {
       return {
@@ -106,7 +106,7 @@ export class ConnectWallet {
         this.initWeb3(
           connect[0].provider === 'Web3'
             ? Web3.givenProvider
-            : connect[0].provider
+            : connect[0].provider,
         );
       }
       return connect[0].connected;
@@ -178,7 +178,7 @@ export class ConnectWallet {
    * @example connectWallet.applySettings(data); //=> data.type etc.
    */
   private applySettings(
-    data: IConnectorMessage | IError | IConnect
+    data: IConnectorMessage | IError | IConnect,
   ): IConnectorMessage | IError | IConnect {
     if (this.settings.providerType) {
       data.type = this.providerName;
@@ -223,10 +223,8 @@ export class ConnectWallet {
             }
           },
           (error: IError) => {
-            error.code = 7;
-            error.message = null;
             reject(this.applySettings(error));
-          }
+          },
         );
       } else {
         error.code = 7;
@@ -328,7 +326,7 @@ export class ConnectWallet {
       try {
         this.contracts[contract.name] = new this.Web3.eth.Contract(
           contract.abi,
-          contract.address
+          contract.address,
         );
         resolve(true);
       } catch {
@@ -397,7 +395,7 @@ export class ConnectWallet {
     return new Observable((observer) => {
       this.connector.eventSubscriber().subscribe(
         (event: IEvent) => observer.next(event),
-        (error: IEventError) => observer.error(error)
+        (error: IEventError) => observer.error(error),
       );
     });
   }
