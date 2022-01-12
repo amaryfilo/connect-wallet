@@ -138,7 +138,7 @@ export class KardiaChainConnect extends AbstractConnector {
           if (accounts[0]) {
             this.connector
               .request({
-                method: 'net_version',
+                method: 'eth_chainId',
               })
               .then((chainID: string) => {
                 this.chainID = +chainID;
