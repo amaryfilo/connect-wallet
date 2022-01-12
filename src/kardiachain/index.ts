@@ -86,7 +86,7 @@ export class KardiaChainConnect extends AbstractConnector {
           if (address.length) {
             this.connector
               .request({
-                method: 'net_version',
+                method: 'eth_chainId',
               })
               .then((chainID: string) => {
                 this.currentAddr = address[0];
