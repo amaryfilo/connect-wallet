@@ -1,6 +1,7 @@
 import Web3 from 'web3';
 import { Observable } from 'rxjs';
 import { Contract } from 'web3-eth-contract';
+import { provider } from 'web3-core';
 
 import { MetamaskConnect } from './metamask';
 import { WalletsConnect } from './wallet-connect';
@@ -48,9 +49,13 @@ export class ConnectWallet {
 
   /**
    * Connect provider to web3 and get access to web3 methods, account address and transaction in blockchain.
-   * Supported MetaMask and WalletConnect providers.
+   * Supported MetaMask, WalletConnect, Kardiachain and CoinBase providers.
    */
-  constructor() {}
+  constructor(initProvider?: provider) {
+    if (initProvider) {
+      this.Web3 = new Web3(initProvider);
+    }
+  }
 
   /**
    * Add custom chains to Connect Wallet, provide an array of chains than return chain list parameters.
@@ -140,7 +145,7 @@ export class ConnectWallet {
    * @param {Any} provider array with provider information.
    * @example connectWallet.initWeb3(provider);
    */
-  public initWeb3(provider: any): void {
+  private initWeb3(provider: any): void {
     if (this.Web3) {
       this.Web3.setProvider(provider);
     } else {
