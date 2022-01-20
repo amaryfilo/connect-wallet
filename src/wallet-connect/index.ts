@@ -30,7 +30,7 @@ export class WalletsConnect extends AbstractConnector {
   public async connect(provider: IProvider): Promise<IConnectorMessage> {
     return new Promise<any>(async (resolve, reject) => {
       this.connector = new WalletConnectProvider(
-        provider.provider[provider.useProvider]
+        provider.provider[provider.useProvider],
       );
       await this.connector
         .enable()
@@ -44,7 +44,7 @@ export class WalletsConnect extends AbstractConnector {
               subtitle: 'Wallet Connect',
               text: `Wallet Connect connected.`,
             },
-          } as IConnectorMessage);
+          });
         })
         .catch(() => {
           reject({
@@ -55,7 +55,7 @@ export class WalletsConnect extends AbstractConnector {
               subtitle: 'Error connect',
               text: `User closed qr modal window.`,
             },
-          } as IConnectorMessage);
+          });
         });
     });
   }
@@ -106,7 +106,7 @@ export class WalletsConnect extends AbstractConnector {
               ],
             name: 'accountsChanged',
           });
-        }
+        },
       );
 
       this.connector.on('chainChanged', (chainId: number) => {
@@ -142,7 +142,7 @@ export class WalletsConnect extends AbstractConnector {
    * @example this.getAccounts().subscribe((account: any)=> {console.log('account',account)});
    */
   public getAccounts(): Promise<any> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       if (!this.connector.connected) {
         this.connector.createSessithis.connector.on();
       }
@@ -152,10 +152,6 @@ export class WalletsConnect extends AbstractConnector {
         network:
           parameters.chainsMap[parameters.chainIDMap[this.connector.chainId]],
       });
-
-      // return {
-      //   unsubscribe(): any {},
-      // };
     });
   }
 }

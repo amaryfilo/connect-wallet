@@ -79,43 +79,42 @@ export class ConnectWallet {
     provider: IProvider,
     network: INetwork,
     settings?: ISettings,
-  ): Promise<{} | boolean> {
+  ): Promise<IConnectorMessage> {
     if (!this.availableProviders.includes(provider.name)) {
       return {
         code: 2,
+        type: 'error',
+        connected: false,
+        provider,
         message: {
           title: 'Error',
           subtitle: 'Provider Error',
           text: `Your provider doesn't exists`,
         },
-      } as IMessageProvider;
+      };
     }
 
     this.network = network;
     this.settings = settings ? settings : { providerType: false };
 
     this.connector = this.chooseProvider(provider.name);
-    const connectPromises = [
-      this.connector
-        .connect(provider)
-        .then((connect: IConnectorMessage) => {
-          return this.applySettings(connect);
-        })
-        .catch((error: IConnectorMessage) => {
-          return this.applySettings(error);
-        }),
-    ];
 
-    return Promise.all(connectPromises).then((connect: any) => {
-      if (connect[0].connected) {
-        this.initWeb3(
-          connect[0].provider === 'Web3'
-            ? Web3.givenProvider
-            : connect[0].provider,
-        );
-      }
-      return connect[0].connected;
-    });
+    return this.connector
+      .connect(provider)
+      .then((connect: IConnectorMessage) => {
+        return this.applySettings(connect);
+      })
+      .then((connect: IConnectorMessage) => {
+        if (connect.connected) {
+          this.initWeb3(
+            connect.provider === 'Web3' ? Web3.givenProvider : connect.provider,
+          );
+        }
+        return connect;
+      })
+      .catch((error: IConnectorMessage) => {
+        return this.applySettings(error) as IConnectorMessage;
+      });
   }
 
   /**
