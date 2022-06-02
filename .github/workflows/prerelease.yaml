@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Prerelease
+name: Pre-release
 
 on:
   workflow_dispatch:
@@ -17,8 +17,13 @@ jobs:
   prerelease:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Make prerelease to npm
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+      - run: npm install
+      - run: npm run build
+      - name: Make pre-release to npm
         uses: epeli/npm-release@v2
         with:
           type: prerelease

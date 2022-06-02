@@ -1,27 +1,18 @@
-import { provider } from 'web3-core';
 import { Observable } from 'rxjs';
+import CoinbaseWalletSDK from '@coinbase/wallet-sdk'
 
 import {
   IConnectorMessage,
+  IProvider,
   INetwork,
-  INativeCurrency,
   IEvent,
   IEventError,
+  INativeCurrency,
 } from '../interface';
-import { parameters, codeMap } from '../helpers';
+import { parameters } from '../helpers';
 import { AbstractConnector } from '../abstract-connector';
 
-// declare global {
-  interface IWindow extends Window {
-    ethereum: {
-      isMetaMask: boolean;
-      isWalletLink: boolean;
-      providers: any;
-    }
-  }
-// }
-
-export class MetamaskConnect extends AbstractConnector {
+export class CoinbaseWalletConnect extends AbstractConnector {
   public connector: any;
   private chainID: number;
   private chainName: string;
@@ -30,12 +21,12 @@ export class MetamaskConnect extends AbstractConnector {
   private blockExplorerUrl: string;
 
   /**
-   * Metamask class to connect browser metamask extention to your application
+   * CoinbaseWalletConnect class to connect browser Coinbase Wallet extention to your application
    * using connect wallet.
    */
+
   constructor(network: INetwork) {
     super();
-
     this.chainID = network.chainID;
     if (network.chainName) this.chainName = network.chainName;
     if (network.nativeCurrency) this.nativeCurrency = network.nativeCurrency;
@@ -45,27 +36,47 @@ export class MetamaskConnect extends AbstractConnector {
   }
 
   /**
-   * Connect Metamask browser or mobile extention to application. Create connection with connect
+   * Connect Coinbase Wallet browser. Create connection with connect
    * wallet and return provider for Web3.
    *
    * @returns return connect status and connect information with provider for Web3.
    * @example this.connect().then((connector: IConnectorMessage) => console.log(connector),(err: IConnectorMessage) => console.log(err));
    */
-  public connect(): Promise<IConnectorMessage> {
-    const { ethereum } = window as IWindow;
-
+  public connect(provider: IProvider): Promise<IConnectorMessage> {
     return new Promise<any>((resolve, reject) => {
-      if (Boolean(ethereum && ethereum.isMetaMask )) {
-        this.connector = ethereum.providers ? ethereum.providers.filter((provider: any) => provider.isMetaMask)[0] : window.ethereum;
+      if (typeof window.ethereum && window.coinbaseWalletExtension) {
+        if (window.coinbaseWalletExtension.isCoinbaseWallet) {
+          const coinbaseWallet = new CoinbaseWalletSDK({
+            darkMode: false,
+            appName: 'Amary Filo Connect Wallet',
+            overrideIsMetaMask: true
+          });
+          const chain = parameters.chainsMap[parameters.chainIDMap[this.chainID]];
 
-        resolve({
-          code: 1,
-          connected: true,
-          provider: this.connector,
+          this.connector = coinbaseWallet.makeWeb3Provider(
+            provider.useProvider === 'rpc' ? provider.provider[provider.useProvider].rpc[this.chainID] : `https://${chain.name}.infura.io/v3/${provider.provider.infura.infuraId}`,
+            this.chainID
+          );
+
+          resolve({
+            code: 1,
+            connected: true,
+            provider: this.connector,
+            message: {
+              title: 'Success',
+              subtitle: 'CoinbaseWallet Connect',
+              text: `CoinbaseWallet found and connected.`,
+            },
+          } as IConnectorMessage);
+        }
+
+        reject({
+          code: 2,
+          connected: false,
           message: {
-            title: 'Success',
-            subtitle: 'Connect success',
-            text: `Metamask found and connected.`,
+            title: 'Error',
+            subtitle: 'Error connect',
+            text: `CoinbaseWallet not found. Please install a wallet using an extension.`,
           },
         } as IConnectorMessage);
       }
@@ -76,14 +87,37 @@ export class MetamaskConnect extends AbstractConnector {
         message: {
           title: 'Error',
           subtitle: 'Error connect',
-          text: `Metamask not found, please install it from <a href='https://metamask.io/' target="_blank">metamask.io</a>.`,
+          text: `Ethereum not found. Please install a wallet using an extension.`,
         },
       } as IConnectorMessage);
     });
   }
 
   private ethRequestAccounts(): Promise<any> {
-    return this.connector.request({ method: 'eth_requestAccounts' });
+    return this.connector.enable();
+  }
+
+  public eventSubscriber(): Observable<IEvent | IEventError> {
+    return new Observable((observer) => {
+      this.connector.on('accountsChanged', (address: Array<any>) => {
+        if (address.length) {
+          observer.next({
+            address: address[0],
+            network: parameters.chainsMap[parameters.chainIDMap[+this.chainID]],
+            name: 'accountsChanged',
+          });
+        } else {
+          observer.error({
+            code: 3,
+            message: {
+              title: 'Error',
+              subtitle: 'Authorized error',
+              text: 'You are not authorized.',
+            },
+          });
+        }
+      });
+    });
   }
 
   private getChainId(): Promise<any> {
@@ -138,57 +172,12 @@ export class MetamaskConnect extends AbstractConnector {
     }
   }
 
-  public eventSubscriber(): Observable<IEvent | IEventError> {
-    return new Observable((observer) => {
-      this.connector.on('chainChanged', async (chainId: string) => {
-        const accounts = await this.ethRequestAccounts();
-
-        if (this.chainID !== parseInt(chainId)) {
-          observer.error({
-            code: 4,
-            address: accounts[0],
-            message: {
-              title: 'Error',
-              subtitle: 'chainChanged error',
-              message: codeMap[4].name,
-            },
-          });
-        }
-        observer.next({
-          address: accounts[0],
-          network: parameters.chainsMap[chainId],
-          name: 'chainChanged',
-        });
-      });
-
-      this.connector.on('accountsChanged', (address: Array<any>) => {
-        if (address.length) {
-          observer.next({
-            address: address[0],
-            network: parameters.chainsMap[parameters.chainIDMap[+this.chainID]],
-            name: 'accountsChanged',
-          });
-        } else {
-          observer.error({
-            code: 3,
-            message: {
-              title: 'Error',
-              subtitle: 'Authorized error',
-              message: codeMap[3].name,
-            },
-          });
-        }
-      });
-    });
-  }
-
   /**
-   * Get account address and chain information from metamask extention.
+   * Get account address and chain information from Coinbase Wallet extention.
    *
    * @returns return an Observable array with data error or connected information.
    * @example this.getAccounts().subscribe((account: any)=> {console.log('account',account)});
    */
-
   public getAccounts(): Promise<any> {
     const error = {
       code: 3,
