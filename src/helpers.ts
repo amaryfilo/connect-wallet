@@ -4,7 +4,7 @@ export const parameters = {
   chainIDMap: {
     1: '0x1',
     3: '0x3',
-    // 4: '0x4',
+    4: '0x4',
     5: '0x5',
     42: '0x2a',
     128: '0x80',
@@ -29,10 +29,10 @@ export const parameters = {
       name: 'ropsten',
       chainID: 3,
     },
-    // '0x4': {
-    //   name: 'rinkeby',
-    //   chainID: 4,
-    // },
+    '0x4': {
+      name: 'rinkeby',
+      chainID: 4,
+    },
     '0x5': {
       name: 'goerli',
       chainID: 5,

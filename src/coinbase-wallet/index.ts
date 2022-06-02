@@ -44,28 +44,39 @@ export class CoinbaseWalletConnect extends AbstractConnector {
    */
   public connect(provider: IProvider): Promise<IConnectorMessage> {
     return new Promise<any>((resolve, reject) => {
-      if (typeof window.ethereum && window.coinbaseWalletExtension.isCoinbaseWallet === true) {
-        const coinbaseWallet = new CoinbaseWalletSDK({
-          darkMode: false,
-          appName: 'Amary Filo Connect Wallet',
-          overrideIsMetaMask: true
-        });
-        const chain = parameters.chainsMap[parameters.chainIDMap[this.chainID]];
-        const connectProvider = provider.provider[provider.useProvider].rpc[this.chainID];
+      if (typeof window.ethereum && window.coinbaseWalletExtension) {
+        if (window.coinbaseWalletExtension.isCoinbaseWallet) {
+          const coinbaseWallet = new CoinbaseWalletSDK({
+            darkMode: false,
+            appName: 'Amary Filo Connect Wallet',
+            overrideIsMetaMask: true
+          });
+          const chain = parameters.chainsMap[parameters.chainIDMap[this.chainID]];
 
-        this.connector = coinbaseWallet.makeWeb3Provider(
-          provider.useProvider === 'rpc' ? connectProvider : `https://${chain.name}.infura.io/v3/${provider.provider.infura.infuraId}`,
-          this.chainID
-        );
+          this.connector = coinbaseWallet.makeWeb3Provider(
+            provider.useProvider === 'rpc' ? provider.provider[provider.useProvider].rpc[this.chainID] : `https://${chain.name}.infura.io/v3/${provider.provider.infura.infuraId}`,
+            this.chainID
+          );
 
-        resolve({
-          code: 1,
-          connected: true,
-          provider: this.connector,
+          resolve({
+            code: 1,
+            connected: true,
+            provider: this.connector,
+            message: {
+              title: 'Success',
+              subtitle: 'CoinbaseWallet Connect',
+              text: `CoinbaseWallet found and connected.`,
+            },
+          } as IConnectorMessage);
+        }
+
+        reject({
+          code: 2,
+          connected: false,
           message: {
-            title: 'Success',
-            subtitle: 'CoinbaseWallet Connect',
-            text: `CoinbaseWallet found and connected.`,
+            title: 'Error',
+            subtitle: 'Error connect',
+            text: `CoinbaseWallet not found. Please install a wallet using an extension.`,
           },
         } as IConnectorMessage);
       }
@@ -76,7 +87,7 @@ export class CoinbaseWalletConnect extends AbstractConnector {
         message: {
           title: 'Error',
           subtitle: 'Error connect',
-          text: `CoinbaseWallet not found.`,
+          text: `Ethereum not found. Please install a wallet using an extension.`,
         },
       } as IConnectorMessage);
     });
